@@ -14,8 +14,8 @@ const LogoTC = () => (
 );
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('admin@columbo.com');
-  const [password, setPassword] = useState('columbo2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,12 +24,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setIsLoading(true);
     setError('');
 
-    // Simulación de validación
+    // Validación restringida a las credenciales solicitadas
     setTimeout(() => {
-      if (email === 'admin@columbo.com' && password === 'columbo2026') {
+      if (email === 'agutierrez@puertocolumbo.com' && password === 'Angel2026') {
         onLogin();
       } else {
-        setError('Credenciales inválidas. Por favor intente de nuevo.');
+        setError('Credenciales no autorizadas. Por favor verifique su correo y contraseña.');
         setIsLoading(false);
       }
     }, 1200);
@@ -37,7 +37,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 relative overflow-hidden">
-      {/* Background decoration */}
+      {/* Decoración de fondo */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full"></div>
       
@@ -47,8 +47,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="mb-6 p-4 bg-white/5 rounded-[24px] border border-white/10 shadow-inner">
               <LogoTC />
             </div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-tight text-center">Puerto Columbo S.A.</h1>
-            <p className="text-primary text-[10px] font-black uppercase tracking-[0.3em] mt-1">Gestión CO₂ v2026</p>
+            <h1 className="text-2xl font-black text-white uppercase tracking-tight text-center leading-none">Puerto Columbo S.A.</h1>
+            <p className="text-primary text-[10px] font-black uppercase tracking-[0.3em] mt-3">Gestión CO₂ – Acceso Autorizado</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -67,8 +67,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-all"
-                  placeholder="usuario@columbo.com"
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-all placeholder:text-slate-700"
+                  placeholder="ejemplo@puertocolumbo.com"
                   required
                 />
               </div>
@@ -82,7 +82,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-all placeholder:text-slate-700"
                   placeholder="••••••••"
                   required
                 />
@@ -117,7 +117,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </form>
 
           <div className="mt-10 pt-10 border-t border-white/5 text-center">
-            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">Acceso Restringido a Personal Autorizado</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">Puerto Columbo S.A. – Área Privada</p>
           </div>
         </div>
       </div>
