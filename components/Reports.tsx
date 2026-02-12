@@ -270,18 +270,24 @@ const Reports: React.FC = () => {
 
   const handleUpdateRecord = (updatedRecord: any) => {
     const existing = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+    // Update record in local storage
     const updated = existing.map((r: any) => r.id === updatedRecord.id ? updatedRecord : r);
     localStorage.setItem('puerto_columbo_user_data', JSON.stringify(updated));
     setEditingRecord(null);
     loadLocalData();
+    // Dispatch event to update other components
+    window.dispatchEvent(new Event('localDataChanged'));
   };
 
   const handleDeleteRecord = (id: string) => {
     if (confirm("¿Eliminar este registro permanentemente?")) {
       const existing = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+      // Filter out deleted record
       const filtered = existing.filter((r: any) => r.id !== id);
       localStorage.setItem('puerto_columbo_user_data', JSON.stringify(filtered));
       loadLocalData();
+      // Dispatch event to update other components
+      window.dispatchEvent(new Event('localDataChanged'));
     }
   };
 

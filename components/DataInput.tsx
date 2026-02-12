@@ -52,6 +52,7 @@ const DataInput: React.FC = () => {
     setIsSaving(true);
     
     setTimeout(() => {
+      // Implement persistence: Create record object
       const newRecord = {
         id: `#PC-26-USR-${Math.floor(Math.random() * 9000) + 1000}`,
         dateStr: new Date(formData.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -61,10 +62,11 @@ const DataInput: React.FC = () => {
         capture: 0,
         status: 'EN REVISIÓN',
         isManual: true,
-        // Guardamos datos crudos para edición posterior
+        // Persist raw input data for future edits
         raw: { ...formData }
       };
 
+      // Save to localStorage
       const existingData = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
       localStorage.setItem('puerto_columbo_user_data', JSON.stringify([newRecord, ...existingData]));
 
@@ -81,7 +83,7 @@ const DataInput: React.FC = () => {
         diesel: ''
       });
       
-      // Emitir evento personalizado para que otras pestañas se enteren del cambio
+      // Dispatch event to update Dashboard and other components
       window.dispatchEvent(new Event('localDataChanged'));
     }, 800);
   };
