@@ -6,6 +6,7 @@ import { NAVIGATION_ITEMS } from '../constants';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onLogout: () => void;
 }
 
 const LogoTC = memo(() => (
@@ -18,7 +19,7 @@ const LogoTC = memo(() => (
   </svg>
 ));
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
   const complianceValue = 84;
 
   return (
@@ -71,6 +72,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <span className="text-sm">{item.label}</span>
               </NavLink>
             ))}
+            
+            <button 
+              onClick={onLogout}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all mt-2"
+            >
+              <span className="material-symbols-outlined">logout</span>
+              <span className="text-sm">Cerrar Sesión</span>
+            </button>
           </nav>
 
           <div className="mt-auto flex flex-col gap-4">

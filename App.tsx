@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -8,9 +8,14 @@ import DataInput from './components/DataInput';
 import VetiverProject from './components/VetiverProject';
 import Reports from './components/Reports';
 import Profile from './components/Profile';
+import Login from './components/Login';
 
 const App: React.FC = () => {
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -32,10 +37,24 @@ const App: React.FC = () => {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  const handleLogin = (status: boolean) => {
+    setIsAuthenticated(status);
+    localStorage.setItem('isLoggedIn', status.toString());
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isLoggedIn');
+  };
+
   const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), []);
   const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   
+  if (!isAuthenticated) {
+    return <Login onLogin={() => handleLogin(true)} />;
+  }
+
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/ingreso': return 'Ingreso de Datos Operativos';
@@ -58,7 +77,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-300">
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} onLogout={handleLogout} />
       
       <div className="flex-1 flex flex-col overflow-y-auto">
         <Header 
@@ -75,6 +94,7 @@ const App: React.FC = () => {
             <Route path="/vetiver" element={<VetiverProject />} />
             <Route path="/reportes" element={<Reports />} />
             <Route path="/perfil" element={<Profile />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
         <footer className="mt-auto p-8 border-t border-slate-200 dark:border-slate-800 text-center">
