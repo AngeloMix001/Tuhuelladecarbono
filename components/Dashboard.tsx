@@ -1,9 +1,10 @@
 
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, memo, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import { COLORS } from '../constants';
 import AiInsights from './AiInsights';
 
@@ -141,6 +142,73 @@ const ExecutiveHeader = memo(({ kpis }: any) => {
   );
 });
 
+const SavedRecordsWidget: React.FC = () => {
+  const [localData, setLocalData] = useState<any[]>([]);
+  const navigate = useNavigate();
+
+  const loadData = () => {
+    const data = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+    setLocalData(data.slice(0, 5)); // Mostramos los últimos 5
+  };
+
+  useEffect(() => {
+    loadData();
+    window.addEventListener('localDataChanged', loadData);
+    return () => window.removeEventListener('localDataChanged', loadData);
+  }, []);
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-white/5 p-8 shadow-sm h-full">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Registros Guardados</h3>
+        <button 
+          onClick={() => navigate('/reportes')}
+          className="text-sm font-black text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"
+        >
+          Ver todo
+        </button>
+      </div>
+
+      <div className="space-y-6">
+        {localData.length > 0 ? localData.map((item, idx) => {
+          const [date, month] = item.dateStr.split(' ');
+          return (
+            <div key={idx} className="flex items-center gap-5 group cursor-pointer animate-in fade-in slide-in-from-left duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
+              {/* Green indicator bar */}
+              <div className="w-1.5 h-12 bg-primary rounded-full shrink-0 group-hover:scale-y-110 transition-transform"></div>
+              
+              {/* Date block */}
+              <div className="flex flex-col items-center justify-center min-w-[50px]">
+                <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{month}</span>
+                <span className="text-xl font-black text-slate-900 dark:text-white leading-none">{date}</span>
+              </div>
+
+              {/* Data info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-lg font-black text-slate-800 dark:text-slate-200">{item.emissions.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">tCO₂e</span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest">{item.origin}</p>
+              </div>
+
+              {/* Status icon */}
+              <div className="text-primary">
+                <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 0" }}>check_circle</span>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="flex flex-col items-center justify-center py-10 text-slate-400 gap-4 opacity-50">
+            <span className="material-symbols-outlined text-5xl">inventory_2</span>
+            <p className="text-[10px] font-black uppercase tracking-widest text-center">No hay registros guardados para mostrar</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Dashboard: React.FC = () => {
   const [filter, setFilter] = useState('Anual');
 
@@ -269,37 +337,44 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-4 bg-white dark:bg-white/5 rounded-[32px] p-8 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
-          <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase self-start">Mix Operativo 2026</h3>
-          <div className="flex-1 relative w-full h-[260px] flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value" stroke="none">
-                  {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-black text-slate-900 dark:text-white">Neto</span>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fuentes</span>
-            </div>
-          </div>
-          <div className="mt-8 w-full space-y-3">
-            {pieData.map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                  <span className="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">{item.name}</span>
-                </div>
-                <span className="font-black dark:text-white">{item.value}%</span>
-              </div>
-            ))}
-          </div>
+        <div className="lg:col-span-4">
+          <SavedRecordsWidget />
         </div>
       </div>
 
-      <AiInsights data={chartData} kpis={kpis} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <AiInsights data={chartData} kpis={kpis} />
+        </div>
+        <div className="bg-white dark:bg-white/5 rounded-[32px] p-8 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase self-start">Mix Operativo 2026</h3>
+            <div className="flex-1 relative w-full h-[260px] flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value" stroke="none">
+                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-3xl font-black text-slate-900 dark:text-white">Neto</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fuentes</span>
+              </div>
+            </div>
+            <div className="mt-8 w-full space-y-3">
+              {pieData.map((item, i) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="size-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <span className="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">{item.name}</span>
+                  </div>
+                  <span className="font-black dark:text-white">{item.value}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+      </div>
     </div>
   );
 };

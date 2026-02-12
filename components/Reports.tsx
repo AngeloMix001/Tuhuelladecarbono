@@ -195,6 +195,7 @@ const Reports: React.FC = () => {
   const [viewMode, setViewMode] = useState<'all' | 'manual'>('all');
   const mockData = useMemo(() => generateMockData(2000), []);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const loadLocalData = useCallback(() => {
     const data = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
@@ -233,6 +234,36 @@ const Reports: React.FC = () => {
     });
   }, [allCombinedData, filters]);
 
+  const downloadWeeklyReport = () => {
+    setIsGenerating(true);
+    setTimeout(() => {
+      // Filtrar registros de los últimos 7 días
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const weeklyData = allCombinedData.filter(d => new Date(d.dateObj) >= sevenDaysAgo);
+      
+      // Crear contenido CSV
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "ID,Fecha,Origen,Emisiones(t),Captura(t),Estado\n";
+      
+      weeklyData.forEach(row => {
+        const line = `${row.id},${row.dateStr},${row.origin},${row.emissions.toFixed(2)},${row.capture.toFixed(2)},${row.status}`;
+        csvContent += line + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Reporte_Semanal_Columbo_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setIsGenerating(false);
+    }, 1500);
+  };
+
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
     setIsScrolled(scrollOffset > 0);
   }, []);
@@ -266,19 +297,32 @@ const Reports: React.FC = () => {
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Auditoría Histórica 2026</h1>
           <p className="text-slate-500 mt-1 font-medium">Visualización de reportes manuales y sistémicos.</p>
         </div>
-        <div className="flex bg-white dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => setViewMode('all')}
-            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'all' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            onClick={downloadWeeklyReport}
+            disabled={isGenerating}
+            className={`px-6 py-3 bg-slate-900 dark:bg-white/5 dark:hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all ${isGenerating ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
           >
-            Todo
+            <span className={`material-symbols-outlined text-lg ${isGenerating ? 'animate-spin' : ''}`}>
+              {isGenerating ? 'sync' : 'download'}
+            </span>
+            {isGenerating ? 'Generando...' : 'Descargar Semanal'}
           </button>
-          <button 
-            onClick={() => setViewMode('manual')}
-            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'manual' ? 'bg-blue-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Registros Guardados
-          </button>
+          
+          <div className="flex bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <button 
+              onClick={() => setViewMode('all')}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'all' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Todo
+            </button>
+            <button 
+              onClick={() => setViewMode('manual')}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'manual' ? 'bg-blue-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Manuales
+            </button>
+          </div>
         </div>
       </header>
 
