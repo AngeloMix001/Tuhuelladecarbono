@@ -17,14 +17,14 @@ const Profile: React.FC = () => {
             <div className="h-32 bg-gradient-to-r from-primary/20 to-primary/5 relative">
               <div className="absolute -bottom-12 left-8">
                 <div className="size-24 rounded-2xl border-4 border-white dark:border-background-dark bg-white shadow-lg overflow-hidden">
-                  <img alt="Foto de perfil" className="w-full h-full object-cover" src="https://picsum.photos/seed/carlos/300" />
+                  <img alt="Foto de perfil" className="w-full h-full object-cover" src="https://picsum.photos/seed/angel/300" />
                 </div>
               </div>
             </div>
             <div className="pt-16 px-8 pb-8">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-2xl font-bold text-forest dark:text-white">Carlos Rodriguez</h3>
+                  <h3 className="text-2xl font-bold text-forest dark:text-white">Angel Gutierrez</h3>
                   <div className="flex items-center gap-2 mt-1 text-primary font-medium">
                     <span className="material-symbols-outlined text-sm">verified_user</span>
                     <span className="text-sm">Gestor Ambiental</span>
@@ -36,7 +36,7 @@ const Profile: React.FC = () => {
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <InfoItem label="Correo Corporativo" value="gestor.ambiental@puertocolumbo.com" />
+                <InfoItem label="Correo Corporativo" value="agutierrez@puertocolumbo.com" />
                 <InfoItem label="Empresa" value="Puerto Columbo S.A." />
                 <InfoItem label="Ubicación" value="Terminal Central, Puerto Columbo" />
                 <InfoItem label="Miembro desde" value="Enero 2022" />
