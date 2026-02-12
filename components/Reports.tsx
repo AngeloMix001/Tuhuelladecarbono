@@ -1,6 +1,8 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import * as ReactWindow from 'react-window';
+
+// Garantizar la resolución de FixedSizeList en entornos híbridos
+const { FixedSizeList: List } = ReactWindow as any;
 
 // Generate a large mock dataset for demonstration
 const generateMockData = (count: number) => {
@@ -340,7 +342,7 @@ const Reports: React.FC = () => {
                 itemSize={68}
                 width="100%"
                 className="scrollbar-hide"
-                onScroll={({ scrollOffset }) => setIsScrolled(scrollOffset > 0)}
+                onScroll={({ scrollOffset }: any) => setIsScrolled(scrollOffset > 0)}
               >
                 {Row}
               </List>
