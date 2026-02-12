@@ -56,7 +56,7 @@ const EditModal = ({ record, onSave, onClose }: { record: any, onSave: (data: an
   };
 
   const handleSave = () => {
-    if (formData.isManual) {
+    if (formData.isManual && !formData.type) { // Only recalc if strictly manual daily record
       const FACTORS = { ELECTRICITY: 0.16, DIESEL: 2.68 };
       const elecCo2 = (parseFloat(formData.raw.electricity) || 0) * FACTORS.ELECTRICITY;
       const dieselCo2 = (parseFloat(formData.raw.diesel) || 0) * FACTORS.DIESEL;
@@ -78,7 +78,7 @@ const EditModal = ({ record, onSave, onClose }: { record: any, onSave: (data: an
         </div>
         
         <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
-          {formData.isManual ? (
+          {formData.isManual && !formData.type ? (
             <div className="grid grid-cols-2 gap-4 border-b border-slate-100 dark:border-white/10 pb-6">
                <div className="col-span-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Datos de Ingreso Manual</div>
                <div className="space-y-1">
@@ -102,7 +102,7 @@ const EditModal = ({ record, onSave, onClose }: { record: any, onSave: (data: an
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Emisiones (t)</label>
-                <input type="number" name="emissions" value={formData.emissions} onChange={handleChange} className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white" />
+                <input type="number" name="emissions" value={formData.emissions} onChange={handleChange} className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white" readOnly={formData.type === 'weekly'} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Captura (t)</label>
@@ -113,7 +113,7 @@ const EditModal = ({ record, onSave, onClose }: { record: any, onSave: (data: an
 
           <div className="space-y-1">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Origen de Actividad</label>
-            <input name="origin" value={formData.origin} onChange={handleChange} className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white" />
+            <input name="origin" value={formData.origin} onChange={handleChange} className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white" readOnly={formData.type === 'weekly'} />
           </div>
 
           <div className="space-y-1">
@@ -121,6 +121,7 @@ const EditModal = ({ record, onSave, onClose }: { record: any, onSave: (data: an
             <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white">
               <option value="VALIDADO">VALIDADO</option>
               <option value="EN REVISIÓN">EN REVISIÓN</option>
+              <option value="GENERADO AUTOMÁTICAMENTE">GENERADO AUTOMÁTICAMENTE</option>
             </select>
           </div>
         </div>
@@ -141,16 +142,22 @@ const ReportRow = memo(({ data, index, style }: { data: any[], index: number, st
   const onDelete = itemData?.onDelete;
 
   if (!row) return null;
+
+  const isWeekly = row.type === 'weekly';
+
   return (
     <div 
       style={style} 
-      className={`${COLUMN_LAYOUT} items-center border-b border-slate-100 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors px-6 group`}
+      className={`${COLUMN_LAYOUT} items-center border-b border-slate-100 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors px-6 group ${isWeekly ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
     >
-      <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{row.dateStr}</div>
+      <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          {isWeekly ? row.rangeStr : row.dateStr}
+      </div>
       <div className="text-sm text-slate-500 font-mono group-hover:text-primary transition-colors">{row.id}</div>
-      <div className="text-sm text-slate-700 dark:text-slate-400 truncate pr-4">
-        {row.origin}
-        {row.isManual && (
+      <div className="text-sm text-slate-700 dark:text-slate-400 truncate pr-4 flex items-center gap-2">
+        {isWeekly && <span className="material-symbols-outlined text-blue-500 text-sm">date_range</span>}
+        {row.origin || 'Reporte Semanal'}
+        {row.isManual && !isWeekly && (
           <span className="ml-2 px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black rounded uppercase">Manual</span>
         )}
       </div>
@@ -164,18 +171,20 @@ const ReportRow = memo(({ data, index, style }: { data: any[], index: number, st
         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase inline-block border ${
           row.status === 'VALIDADO' 
             ? 'bg-green-100/50 text-green-700 border-green-200' 
+            : row.status === 'GENERADO AUTOMÁTICAMENTE'
+            ? 'bg-purple-100/50 text-purple-700 border-purple-200'
             : 'bg-blue-100/50 text-blue-700 border-blue-200'
         }`}>
-          {row.status}
+          {row.status === 'GENERADO AUTOMÁTICAMENTE' ? 'AUTO' : row.status}
         </span>
       </div>
       <div className="text-right flex items-center justify-end gap-1">
-        {row.isManual ? (
+        {(row.isManual || isWeekly) ? (
           <>
             <button onClick={() => onEdit(row)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors" title="Editar">
               <span className="material-symbols-outlined text-lg">edit</span>
             </button>
-            <button onClick={() => onDelete(row.id)} className="p-2 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-500 transition-colors" title="Eliminar">
+            <button onClick={() => onDelete(row.id, isWeekly)} className="p-2 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-500 transition-colors" title="Eliminar">
               <span className="material-symbols-outlined text-lg">delete</span>
             </button>
           </>
@@ -191,20 +200,25 @@ const ReportRow = memo(({ data, index, style }: { data: any[], index: number, st
 
 const Reports: React.FC = () => {
   const [userData, setUserData] = useState<any[]>([]);
+  const [weeklyReports, setWeeklyReports] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
-  const [viewMode, setViewMode] = useState<'all' | 'manual'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'manual' | 'weekly'>('all');
   const mockData = useMemo(() => generateMockData(2000), []);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const loadLocalData = useCallback(() => {
     const data = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+    const weeklyData = JSON.parse(localStorage.getItem('puerto_columbo_weekly_reports') || '[]');
+    
     const parsedData = data.map((d: any) => ({
       ...d,
       dateObj: new Date(d.dateObj),
       isManual: true
     }));
+    
     setUserData(parsedData);
+    setWeeklyReports(weeklyData);
   }, []);
 
   useEffect(() => {
@@ -215,8 +229,9 @@ const Reports: React.FC = () => {
 
   const allCombinedData = useMemo(() => {
     if (viewMode === 'manual') return userData;
-    return [...userData, ...mockData];
-  }, [userData, mockData, viewMode]);
+    if (viewMode === 'weekly') return weeklyReports;
+    return [...weeklyReports, ...userData, ...mockData];
+  }, [userData, mockData, weeklyReports, viewMode]);
 
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -227,7 +242,7 @@ const Reports: React.FC = () => {
     return allCombinedData.filter(item => {
       const matchesSearch = filters.searchTerm === '' || 
         item.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        item.origin.toLowerCase().includes(filters.searchTerm.toLowerCase());
+        (item.origin || '').toLowerCase().includes(filters.searchTerm.toLowerCase());
 
       const matchesStatus = filters.status === 'Todos' || item.status === filters.status;
       return matchesSearch && matchesStatus;
@@ -241,14 +256,14 @@ const Reports: React.FC = () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const weeklyData = allCombinedData.filter(d => new Date(d.dateObj) >= sevenDaysAgo);
+      const weeklyData = allCombinedData.filter(d => new Date(d.dateObj || d.startDate) >= sevenDaysAgo);
       
       // Crear contenido CSV
       let csvContent = "data:text/csv;charset=utf-8,";
       csvContent += "ID,Fecha,Origen,Emisiones(t),Captura(t),Estado\n";
       
       weeklyData.forEach(row => {
-        const line = `${row.id},${row.dateStr},${row.origin},${row.emissions.toFixed(2)},${row.capture.toFixed(2)},${row.status}`;
+        const line = `${row.id},${row.dateStr || row.rangeStr},${row.origin || 'Reporte Semanal'},${row.emissions.toFixed(2)},${row.capture.toFixed(2)},${row.status}`;
         csvContent += line + "\n";
       });
       
@@ -269,22 +284,24 @@ const Reports: React.FC = () => {
   }, []);
 
   const handleUpdateRecord = (updatedRecord: any) => {
-    const existing = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+    const key = updatedRecord.type === 'weekly' ? 'puerto_columbo_weekly_reports' : 'puerto_columbo_user_data';
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
     // Update record in local storage
     const updated = existing.map((r: any) => r.id === updatedRecord.id ? updatedRecord : r);
-    localStorage.setItem('puerto_columbo_user_data', JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
     setEditingRecord(null);
     loadLocalData();
     // Dispatch event to update other components
     window.dispatchEvent(new Event('localDataChanged'));
   };
 
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = (id: string, isWeekly: boolean = false) => {
     if (confirm("¿Eliminar este registro permanentemente?")) {
-      const existing = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+      const key = isWeekly ? 'puerto_columbo_weekly_reports' : 'puerto_columbo_user_data';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
       // Filter out deleted record
       const filtered = existing.filter((r: any) => r.id !== id);
-      localStorage.setItem('puerto_columbo_user_data', JSON.stringify(filtered));
+      localStorage.setItem(key, JSON.stringify(filtered));
       loadLocalData();
       // Dispatch event to update other components
       window.dispatchEvent(new Event('localDataChanged'));
@@ -293,7 +310,7 @@ const Reports: React.FC = () => {
 
   const itemData = useMemo(() => ({
     onEdit: (rec: any) => setEditingRecord(rec),
-    onDelete: (id: string) => handleDeleteRecord(id)
+    onDelete: (id: string, isWeekly: boolean) => handleDeleteRecord(id, isWeekly)
   }), [loadLocalData]);
 
   return (
@@ -301,7 +318,7 @@ const Reports: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Auditoría Histórica 2026</h1>
-          <p className="text-slate-500 mt-1 font-medium">Visualización de reportes manuales y sistémicos.</p>
+          <p className="text-slate-500 mt-1 font-medium">Visualización de reportes manuales, sistémicos y consolidados.</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -315,7 +332,7 @@ const Reports: React.FC = () => {
             {isGenerating ? 'Generando...' : 'Descargar Semanal'}
           </button>
           
-          <div className="flex bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+          <div className="flex bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
             <button 
               onClick={() => setViewMode('all')}
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'all' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
@@ -326,7 +343,13 @@ const Reports: React.FC = () => {
               onClick={() => setViewMode('manual')}
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'manual' ? 'bg-blue-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Manuales
+              Diarios
+            </button>
+            <button 
+              onClick={() => setViewMode('weekly')}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'weekly' ? 'bg-purple-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Semanal
             </button>
           </div>
         </div>
@@ -357,6 +380,7 @@ const Reports: React.FC = () => {
               <option value="Todos">Todos los estados</option>
               <option value="VALIDADO">VALIDADO</option>
               <option value="EN REVISIÓN">EN REVISIÓN</option>
+              <option value="GENERADO AUTOMÁTICAMENTE">AUTO (SEMANAL)</option>
             </select>
           </div>
         </div>
@@ -365,9 +389,9 @@ const Reports: React.FC = () => {
       <section className="bg-white dark:bg-white/5 rounded-[40px] border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden flex flex-col transition-all">
         <div className="p-8 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
           <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-            {viewMode === 'manual' ? 'Mis Registros Guardados' : 'Base de Datos Consolidada'}
+            {viewMode === 'manual' ? 'Registros Diarios' : viewMode === 'weekly' ? 'Reportes Semanales Consolidados' : 'Base de Datos Completa'}
           </h2>
-          <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border ${viewMode === 'manual' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+          <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border ${viewMode === 'manual' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : viewMode === 'weekly' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
             {filteredData.length.toLocaleString()} Entradas
           </span>
         </div>
@@ -382,7 +406,7 @@ const Reports: React.FC = () => {
               transition-all duration-300 backdrop-blur-md
               ${isScrolled ? 'shadow-lg border-b-primary/20' : 'border-b border-slate-100 dark:border-white/10'}
             `}>
-              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Fecha</div>
+              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Fecha / Rango</div>
               <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">ID Registro</div>
               <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Origen</div>
               <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Emisiones (t)</div>
