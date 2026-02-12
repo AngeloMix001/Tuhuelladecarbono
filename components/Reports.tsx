@@ -1,8 +1,11 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import * as ReactWindow from 'react-window';
 
-// Garantizar la resolución de FixedSizeList en entornos híbridos
-const { FixedSizeList: List } = ReactWindow as any;
+// Resolución segura de FixedSizeList para evitar Error #130 (Element type is invalid)
+const ReactWindowModule = ReactWindow as any;
+const List = ReactWindowModule.FixedSizeList || 
+             (ReactWindowModule.default && ReactWindowModule.default.FixedSizeList) || 
+             ReactWindowModule.default;
 
 // Generate a large mock dataset for demonstration
 const generateMockData = (count: number) => {
@@ -335,7 +338,7 @@ const Reports: React.FC = () => {
             </div>
 
             {/* Virtualized List */}
-            {filteredData.length > 0 ? (
+            {filteredData.length > 0 && List ? (
               <List
                 height={520}
                 itemCount={filteredData.length}
@@ -352,8 +355,10 @@ const Reports: React.FC = () => {
                   <span className="material-symbols-outlined text-6xl opacity-20">search_off</span>
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">Sin resultados</p>
-                  <p className="text-sm">Ajuste los parámetros de filtrado para encontrar registros.</p>
+                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                    {filteredData.length === 0 ? "Sin resultados" : "Error al cargar la lista"}
+                  </p>
+                  <p className="text-sm">Ajuste los parámetros de filtrado o recargue la página.</p>
                 </div>
                 <button onClick={resetFilters} className="text-xs font-bold text-primary underline">Limpiar filtros actuales</button>
               </div>
