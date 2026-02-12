@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, memo, useMemo } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -65,7 +64,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
     setLoading(true);
 
     try {
-      // Create a new GoogleGenAI instance right before making an API call per guidelines
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       
       const systemInstruction = `
@@ -83,7 +81,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
         4. Respuestas concisas.
       `;
 
-      // Refactored to use systemInstruction config and proper content structure
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: userText,
@@ -102,7 +99,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
     }
   }, [kpis, data, loading]);
 
-  // Added useMemo to React imports to fix "Cannot find name 'useMemo'" error
   const quickActions = useMemo(() => [
     { label: "Análisis del balance neto", icon: "balance" },
     { label: "¿Cómo va el proyecto Vetiver?", icon: "eco" },
@@ -113,7 +109,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
 
   return (
     <>
-      {/* Botón Flotante Memoizado Visualmente */}
       <button 
         onClick={handleToggleChat}
         className="fixed bottom-8 right-8 bg-slate-900 dark:bg-primary text-white p-4 rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center group border-4 border-white dark:border-slate-800"
@@ -127,7 +122,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
         </span>
       </button>
 
-      {/* Ventana de Chat */}
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div 
@@ -137,7 +131,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
           
           <div className="relative w-full max-w-lg bg-slate-50 dark:bg-slate-900 h-full shadow-[-20px_0_50px_rgba(0,0,0,0.2)] flex flex-col animate-in slide-in-from-right duration-500">
             
-            {/* Header del Chat */}
             <div className="p-6 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -159,25 +152,29 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
               </button>
             </div>
 
-            {/* Área de Mensajes */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth scrollbar-hide">
               {messages.map((msg, idx) => (
                 <MessageBubble key={idx} msg={msg} />
               ))}
               
               {loading && (
-                <div className="flex justify-start animate-pulse">
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl rounded-bl-none p-4 flex gap-2 shadow-sm">
-                    <div className="size-2 bg-primary rounded-full animate-bounce"></div>
-                    <div className="size-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                    <div className="size-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                <div className="flex justify-start w-[85%] animate-in fade-in duration-300">
+                  <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl rounded-bl-none p-5 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                       <span className="material-symbols-outlined text-primary text-sm animate-spin-slow">psychology</span>
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">IA Analizando...</span>
+                    </div>
+                    <div className="space-y-2.5">
+                      <div className="h-2 bg-slate-200 dark:bg-slate-700/50 rounded-full w-full animate-pulse"></div>
+                      <div className="h-2 bg-slate-200 dark:bg-slate-700/50 rounded-full w-[90%] animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                      <div className="h-2 bg-slate-200 dark:bg-slate-700/50 rounded-full w-[40%] animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                    </div>
                   </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
 
-            {/* Sugerencias Rápidas */}
             {messages.length < 3 && !loading && (
               <div className="px-6 pb-4 flex flex-wrap gap-2">
                 {quickActions.map((action, i) => (
@@ -186,7 +183,6 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
               </div>
             )}
 
-            {/* Input de Chat */}
             <div className="p-6 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
               <div className="relative flex items-center gap-3">
                 <input 
