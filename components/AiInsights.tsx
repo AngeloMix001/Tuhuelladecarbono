@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, memo, useMemo } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -44,7 +45,7 @@ const QuickAction = memo(({ action, onClick }: { action: any, onClick: (label: s
 const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: '¡Hola! Soy tu Consultor de Sostenibilidad IA. He analizado los datos de Puerto Columbo. ¿En qué puedo ayudarte hoy?' }
+    { role: 'model', text: '¡Hola! Soy tu Consultor de Sostenibilidad IA. Estamos en 2026 y Puerto Columbo ha logrado un hito histórico de balance negativo. ¿Analizamos los objetivos para 2027?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -67,17 +68,18 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       
       const systemInstruction = `
-        Eres el Consultor Senior de Sostenibilidad de Puerto Columbo S.A. 
-        Analiza datos ambientales.
-        DATOS ACTUALES:
+        Eres el Consultor Senior de Sostenibilidad de Puerto Columbo S.A. en el año 2026.
+        Analiza datos ambientales bajo el contexto de que ya hemos superado el Cero Neto y ahora somos Carbono Negativos.
+        NUEVA META: Consolidar la autonomía energética total para 2027.
+        DATOS ACTUALES 2026:
         - KPIs: ${JSON.stringify(kpis)}
         - Historial Mensual: ${JSON.stringify(data)}
-        - Proyecto: Vetiver (captura biológica).
+        - Proyecto Consolidado: Vetiver (Bio-Captura masiva).
         
         REGLAS:
-        1. Profesionalismo corporativo.
-        2. Usa datos reales de los KPIs.
-        3. Fomenta soluciones basadas en naturaleza.
+        1. Profesionalismo corporativo futurista y optimista.
+        2. Usa datos reales de los KPIs proporcionados.
+        3. Fomenta la transición a hidrógeno verde y meta 2027.
         4. Respuestas concisas.
       `;
 
@@ -100,9 +102,9 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
   }, [kpis, data, loading]);
 
   const quickActions = useMemo(() => [
-    { label: "Análisis del balance neto", icon: "balance" },
-    { label: "¿Cómo va el proyecto Vetiver?", icon: "eco" },
-    { label: "Sugerencias para reducir Diesel", icon: "ev_station" }
+    { label: "Análisis del balance negativo", icon: "balance" },
+    { label: "Proyección autonomía 2027", icon: "bolt" },
+    { label: "Optimización Hidrógeno", icon: "ev_station" }
   ], []);
 
   const handleToggleChat = useCallback(() => setIsOpen(prev => !prev), []);
@@ -118,7 +120,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
           <span className="absolute -top-1 -right-1 size-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 animate-pulse"></span>
         </div>
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 group-hover:ml-3 whitespace-nowrap font-black text-xs uppercase tracking-widest">
-          Consultar IA
+          Consultar IA 2026
         </span>
       </button>
 
@@ -137,10 +139,10 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
                   <span className="material-symbols-outlined text-primary text-3xl animate-pulse">psychology</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Advisor Inteligente</h3>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">AI Advisor 2026</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="size-2 rounded-full bg-primary animate-pulse"></span>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">En línea</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conectado a Red Operativa</span>
                   </div>
                 </div>
               </div>
@@ -162,7 +164,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
                   <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl rounded-bl-none p-5 shadow-sm space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                        <span className="material-symbols-outlined text-primary text-sm animate-spin-slow">psychology</span>
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">IA Analizando...</span>
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sincronizando Metas 2027...</span>
                     </div>
                     <div className="space-y-2.5">
                       <div className="h-2 bg-slate-200 dark:bg-slate-700/50 rounded-full w-full animate-pulse"></div>
@@ -190,7 +192,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage(input)}
-                  placeholder="Pregunta algo..."
+                  placeholder="Hablemos de 2026 y el futuro..."
                   className="flex-1 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
                 />
                 <button 

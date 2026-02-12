@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -11,6 +11,7 @@ import Profile from './components/Profile';
 
 const App: React.FC = () => {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) return savedTheme === 'dark';
@@ -27,14 +28,21 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  // Cerrar sidebar al cambiar de ruta en móvil
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), []);
+  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/ingreso': return 'Ingreso de Datos Operativos';
       case '/vetiver': return 'Configuración de Captura CO₂';
       case '/reportes': return 'Reportes y Exportación';
-      case '/perfil': return 'Perfil de Usuario';
+      case '/perfil': return 'Cuenta / Perfil';
       default: return 'Panel CO₂ Dashboard';
     }
   };
@@ -51,13 +59,15 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-300">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      
       <div className="flex-1 flex flex-col overflow-y-auto">
         <Header 
           title={getPageTitle()} 
           breadcrumb={getBreadcrumb()} 
           isDarkMode={isDarkMode} 
-          toggleDarkMode={toggleDarkMode} 
+          toggleDarkMode={toggleDarkMode}
+          onMenuClick={toggleSidebar}
         />
         <main className="p-4 md:p-8 max-w-7xl mx-auto w-full">
           <Routes>
@@ -69,7 +79,7 @@ const App: React.FC = () => {
           </Routes>
         </main>
         <footer className="mt-auto p-8 border-t border-slate-200 dark:border-slate-800 text-center">
-          <p className="text-xs text-slate-400 font-medium">© 2024 Puerto Columbo S.A. – Panel de Gestión Ambiental Certificado</p>
+          <p className="text-xs text-slate-400 font-medium">© 2026 Puerto Columbo S.A. – Panel de Gestión Ambiental Certificado</p>
         </footer>
       </div>
     </div>
