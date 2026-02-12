@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 ></div>
               </div>
               <div className="flex justify-between items-center mt-2">
-                <p className="text-[10px] text-neutral-green-600 dark:text-slate-500 font-bold">Meta 2024</p>
+                <p className="text-[10px] text-neutral-green-600 dark:text-slate-500 font-bold">Meta 2027</p>
                 <p className="text-[10px] text-primary font-black">{complianceValue}%</p>
               </div>
             </div>

@@ -1,11 +1,13 @@
 
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, memo, Suspense, lazy } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { COLORS } from '../constants';
-import AiInsights from './AiInsights';
+
+// Lazy loading heavy AI component
+const AiInsights = lazy(() => import('./AiInsights'));
 
 // --- DATOS MOCK OPTIMIZADOS (Actualizados a 2026) ---
 const RAW_DATA = [
@@ -300,7 +302,9 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <AiInsights data={chartData} kpis={kpis} />
+      <Suspense fallback={<div className="h-20 flex items-center justify-center"><div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>}>
+        <AiInsights data={chartData} kpis={kpis} />
+      </Suspense>
     </div>
   );
 };

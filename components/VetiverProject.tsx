@@ -184,6 +184,44 @@ const Interactive3DStage: React.FC<{ depth: number, year: string, color: string,
       onDoubleClick={resetView}
       onContextMenu={(e) => e.preventDefault()}
     >
+      <style>{`
+        .perspective-1000 { perspective: 1000px; }
+        .cube-container { position: relative; transform-style: preserve-3d; transition: width 0.3s ease, height 0.3s ease; }
+        .cube-face { position: absolute; width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.04); transition: filter 0.3s ease; }
+        .front-face { transform: translateZ(40px); background: #23180c; border-radius: 2px; }
+        .top-face { height: 80px; transform: rotateX(90deg) translateZ(40px); }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
+        
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* Optimized Subtle Sway Animations */
+        @keyframes root-sway-subtle { 
+          0%, 100% { transform: rotate(-0.4deg); } 
+          50% { transform: rotate(0.4deg); } 
+        }
+        @keyframes root-sway-lateral { 
+          0%, 100% { transform: skewX(-0.6deg) scaleY(1); } 
+          50% { transform: skewX(0.6deg) scaleY(1.01); } 
+        }
+
+        .root-path { 
+          will-change: transform; 
+          transform-origin: 50% 0%; 
+        }
+
+        .animate-root-sway-primary { 
+          animation: root-sway-subtle 10s ease-in-out infinite; 
+        }
+        .animate-root-sway-lateral-1 { 
+          animation: root-sway-lateral 12s ease-in-out infinite; 
+          animation-delay: -3s;
+        }
+        .animate-root-sway-lateral-2 { 
+          animation: root-sway-lateral 14s ease-in-out infinite; 
+          animation-delay: -7s;
+        }
+      `}</style>
+
       <div className="absolute top-8 right-8 flex flex-col items-end gap-2 z-30 pointer-events-none">
         <div className={`px-4 py-2 rounded-2xl border transition-all duration-300 flex items-center gap-3 shadow-2xl backdrop-blur-md ${interactionMode !== 'idle' ? 'bg-primary/20 border-primary/40 text-primary scale-100 opacity-100' : 'bg-white/5 border-white/10 text-slate-500 scale-95 opacity-40'}`}>
           <span className="material-symbols-outlined text-lg">
@@ -214,6 +252,8 @@ const Interactive3DStage: React.FC<{ depth: number, year: string, color: string,
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/90"></div>
             <svg className="w-full h-full overflow-visible" viewBox="0 0 100 200">
               <path className="root-path animate-root-sway-primary" d={`M 50 0 L 50 ${200 * depth}`} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 10px ${color})`, opacity: 0.9 }} />
+              <path className="root-path animate-root-sway-lateral-1" d={`M 50 ${20 * depth} Q 30 ${70 * depth} 15 ${120 * depth} M 50 ${90 * depth} Q 25 ${140 * depth} 30 ${200 * depth}`} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${color})`, opacity: 0.8 }} />
+              <path className="root-path animate-root-sway-lateral-2" d={`M 50 ${20 * depth} Q 70 ${70 * depth} 85 ${120 * depth} M 50 ${90 * depth} Q 75 ${140 * depth} 70 ${200 * depth}`} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${color})`, opacity: 0.8 }} />
             </svg>
           </div>
           <div className="cube-face right-face" style={{ filter: `brightness(${sideBrightness})` }}></div>

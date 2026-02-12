@@ -1,13 +1,24 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import Dashboard from './components/Dashboard';
-import DataInput from './components/DataInput';
-import VetiverProject from './components/VetiverProject';
-import Reports from './components/Reports';
-import Profile from './components/Profile';
+
+// Lazy loading components for performance
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const DataInput = lazy(() => import('./components/DataInput'));
+const VetiverProject = lazy(() => import('./components/VetiverProject'));
+const Reports = lazy(() => import('./components/Reports'));
+const Profile = lazy(() => import('./components/Profile'));
+
+const LoadingFallback = () => (
+  <div className="flex-1 flex items-center justify-center bg-background-light dark:bg-background-dark">
+    <div className="flex flex-col items-center gap-4">
+      <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Sincronizando Sistema 2026...</p>
+    </div>
+  </div>
+);
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -28,7 +39,6 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Cerrar sidebar al cambiar de ruta en móvil
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
@@ -70,13 +80,15 @@ const App: React.FC = () => {
           onMenuClick={toggleSidebar}
         />
         <main className="p-4 md:p-8 max-w-7xl mx-auto w-full">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/ingreso" element={<DataInput />} />
-            <Route path="/vetiver" element={<VetiverProject />} />
-            <Route path="/reportes" element={<Reports />} />
-            <Route path="/perfil" element={<Profile />} />
-          </Routes>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/ingreso" element={<DataInput />} />
+              <Route path="/vetiver" element={<VetiverProject />} />
+              <Route path="/reportes" element={<Reports />} />
+              <Route path="/perfil" element={<Profile />} />
+            </Routes>
+          </Suspense>
         </main>
         <footer className="mt-auto p-8 border-t border-slate-200 dark:border-slate-800 text-center">
           <p className="text-xs text-slate-400 font-medium">© 2026 Puerto Columbo S.A. – Panel de Gestión Ambiental Certificado</p>

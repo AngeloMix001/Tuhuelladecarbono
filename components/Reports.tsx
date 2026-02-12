@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, memo, useCallback, useEffect } from 'react';
 import * as ReactWindow from 'react-window';
 
 const ReactWindowModule = ReactWindow as any;
@@ -20,7 +20,7 @@ const generateMockData = (count: number) => {
   return Array.from({ length: count }, (_, i) => {
     const day = (i % 28) + 1;
     const month = (i % 12);
-    const date = new Date(2026, month, day); // Actualizado a 2026
+    const date = new Date(2026, month, day);
     
     return {
       id: `#PC-26-${55300 - i}`,
@@ -36,18 +36,60 @@ const generateMockData = (count: number) => {
 
 const COLUMN_LAYOUT = "grid grid-cols-[140px_100px_1fr_100px_100px_120px_60px]";
 
-const ORIGIN_OPTIONS = [
-  { label: 'Todas las plantas', icon: 'apps' },
-  { label: 'Terminal Marítimo A1', icon: 'sailing' },
-  { label: 'Reserva Forestal Puerto', icon: 'forest' },
-  { label: 'Planta Logística Norte', icon: 'conveyor_belt' },
-  { label: 'Terminal Marítimo A2', icon: 'dock' },
-  { label: 'Parque Solar Interno', icon: 'solar_power' },
-];
+// Extracted stable row component for virtualization performance
+const ReportRow = memo(({ data, index, style }: { data: any[], index: number, style: React.CSSProperties }) => {
+  const row = data[index];
+  if (!row) return null;
+  return (
+    <div 
+      style={style} 
+      className={`${COLUMN_LAYOUT} items-center border-b border-slate-100 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors px-6 group`}
+    >
+      <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{row.dateStr}</div>
+      <div className="text-sm text-slate-500 font-mono group-hover:text-primary transition-colors">{row.id}</div>
+      <div className="text-sm text-slate-700 dark:text-slate-400 truncate pr-4">{row.origin}</div>
+      <div className={`text-sm text-right font-bold ${row.emissions > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+        {row.emissions > 0 ? row.emissions.toFixed(1) : '-'}
+      </div>
+      <div className={`text-sm text-right font-bold ${row.capture > 0 ? 'text-primary' : 'text-slate-300'}`}>
+        {row.capture > 0 ? row.capture.toFixed(1) : '-'}
+      </div>
+      <div className="text-center">
+        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase inline-block border ${
+          row.status === 'VALIDADO' 
+            ? 'bg-green-100/50 text-green-700 border-green-200' 
+            : 'bg-blue-100/50 text-blue-700 border-blue-200'
+        }`}>
+          {row.status}
+        </span>
+      </div>
+      <div className="text-right">
+        <button className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 transition-colors">
+          <span className="material-symbols-outlined text-xl">more_vert</span>
+        </button>
+      </div>
+    </div>
+  );
+});
 
 const Reports: React.FC = () => {
-  const allData = useMemo(() => generateMockData(2000), []);
+  const [userData, setUserData] = useState<any[]>([]);
+  const mockData = useMemo(() => generateMockData(2000), []);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+    // Ensure dateObj is converted back from string if stored as JSON
+    const parsedData = data.map((d: any) => ({
+      ...d,
+      dateObj: new Date(d.dateObj)
+    }));
+    setUserData(parsedData);
+  }, []);
+
+  const allCombinedData = useMemo(() => {
+    return [...userData, ...mockData];
+  }, [userData, mockData]);
 
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -62,7 +104,7 @@ const Reports: React.FC = () => {
   });
 
   const filteredData = useMemo(() => {
-    return allData.filter(item => {
+    return allCombinedData.filter(item => {
       const matchesSearch = filters.searchTerm === '' || 
         item.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         item.origin.toLowerCase().includes(filters.searchTerm.toLowerCase());
@@ -86,67 +128,17 @@ const Reports: React.FC = () => {
 
       return matchesSearch && matchesStatus && matchesOrigin && matchesEmissions && matchesCapture && matchesDate;
     });
-  }, [allData, filters]);
+  }, [allCombinedData, filters]);
 
-  const resetFilters = () => {
-    setFilters({
-      searchTerm: '',
-      status: 'Todos',
-      origin: 'Todas las plantas',
-      minEmissions: '',
-      maxEmissions: '',
-      minCapture: '',
-      maxCapture: '',
-      startDate: '',
-      endDate: ''
-    });
-  };
+  const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
+    setIsScrolled(scrollOffset > 0);
+  }, []);
 
-  const isFiltered = useMemo(() => {
-    return filters.searchTerm !== '' || 
-           filters.status !== 'Todos' || 
-           filters.origin !== 'Todas las plantas' ||
-           filters.minEmissions !== '' ||
-           filters.maxEmissions !== '' ||
-           filters.minCapture !== '' ||
-           filters.maxCapture !== '' ||
-           filters.startDate !== '' ||
-           filters.endDate !== '';
-  }, [filters]);
-
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const row = filteredData[index];
-    if (!row) return null;
-    return (
-      <div 
-        style={style} 
-        className={`${COLUMN_LAYOUT} items-center border-b border-slate-100 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors px-6 group`}
-      >
-        <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{row.dateStr}</div>
-        <div className="text-sm text-slate-500 font-mono group-hover:text-primary transition-colors">{row.id}</div>
-        <div className="text-sm text-slate-700 dark:text-slate-400 truncate pr-4">{row.origin}</div>
-        <div className={`text-sm text-right font-bold ${row.emissions > 0 ? 'text-red-500' : 'text-slate-300'}`}>
-          {row.emissions > 0 ? row.emissions.toFixed(1) : '-'}
-        </div>
-        <div className={`text-sm text-right font-bold ${row.capture > 0 ? 'text-primary' : 'text-slate-300'}`}>
-          {row.capture > 0 ? row.capture.toFixed(1) : '-'}
-        </div>
-        <div className="text-center">
-          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase inline-block border ${
-            row.status === 'VALIDADO' 
-              ? 'bg-green-100/50 text-green-700 border-green-200' 
-              : 'bg-blue-100/50 text-blue-700 border-blue-200'
-          }`}>
-            {row.status}
-          </span>
-        </div>
-        <div className="text-right">
-          <button className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 transition-colors">
-            <span className="material-symbols-outlined text-xl">more_vert</span>
-          </button>
-        </div>
-      </div>
-    );
+  const handleClearLocal = () => {
+    if (confirm("¿Está seguro de eliminar los registros locales guardados?")) {
+      localStorage.removeItem('puerto_columbo_user_data');
+      setUserData([]);
+    }
   };
 
   return (
@@ -157,6 +149,15 @@ const Reports: React.FC = () => {
           <p className="text-slate-500 mt-1 font-medium">Gestión consolidada hacia la meta Net-Zero 2027.</p>
         </div>
         <div className="flex items-center gap-3">
+          {userData.length > 0 && (
+            <button 
+              onClick={handleClearLocal}
+              className="px-4 py-3 rounded-xl font-bold text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center gap-2 border border-red-200 dark:border-red-500/20"
+            >
+              <span className="material-symbols-outlined text-sm">delete_sweep</span>
+              Limpiar Locales
+            </button>
+          )}
           <button className="bg-primary hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95">
             <span className="material-symbols-outlined text-xl">download</span>
             Descargar Reporte 2026
@@ -198,9 +199,16 @@ const Reports: React.FC = () => {
         <div className="p-8 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Registros 2026</h2>
-            <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase border border-primary/20">
-              {filteredData.length.toLocaleString()} Entradas
-            </span>
+            <div className="flex gap-2">
+              <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase border border-primary/20">
+                {filteredData.length.toLocaleString()} Total
+              </span>
+              {userData.length > 0 && (
+                <span className="bg-blue-500/10 text-blue-500 text-[10px] font-black px-3 py-1 rounded-full uppercase border border-blue-500/20">
+                  {userData.length} Manuales
+                </span>
+              )}
+            </div>
           </div>
         </div>
         
@@ -229,12 +237,18 @@ const Reports: React.FC = () => {
                 itemCount={filteredData.length}
                 itemSize={68}
                 width="100%"
+                itemData={filteredData}
                 className="scrollbar-hide"
-                onScroll={({ scrollOffset }: any) => setIsScrolled(scrollOffset > 0)}
+                onScroll={handleScroll}
               >
-                {Row}
+                {ReportRow}
               </List>
-            ) : null}
+            ) : (
+              <div className="h-64 flex flex-col items-center justify-center gap-4 text-slate-400">
+                <span className="material-symbols-outlined text-4xl">inventory_2</span>
+                <p className="text-sm font-bold uppercase tracking-widest">No se encontraron registros</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

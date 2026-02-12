@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Simplified emission factors
 const FACTORS = {
@@ -22,6 +22,9 @@ const DataInput: React.FC = () => {
     total: 0
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   useEffect(() => {
     const elecCo2 = (parseFloat(formData.electricity) || 0) * FACTORS.ELECTRICITY;
     const dieselCo2 = (parseFloat(formData.diesel) || 0) * FACTORS.DIESEL;
@@ -41,7 +44,44 @@ const DataInput: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Datos guardados: ${estimations.total.toFixed(4)} tCO2e proyectados para esta jornada.`);
+    if (estimations.total <= 0) {
+      alert("Por favor ingrese valores operativos válidos.");
+      return;
+    }
+
+    setIsSaving(true);
+    
+    // Simulate a brief delay for UX
+    setTimeout(() => {
+      const newRecord = {
+        id: `#PC-26-USR-${Math.floor(Math.random() * 9000) + 1000}`,
+        dateStr: new Date(formData.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+        dateObj: new Date(formData.date),
+        origin: 'Ingreso Manual App',
+        emissions: estimations.total,
+        capture: 0,
+        status: 'EN REVISIÓN'
+      };
+
+      // Persistence in LocalStorage
+      const existingData = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+      localStorage.setItem('puerto_columbo_user_data', JSON.stringify([newRecord, ...existingData]));
+
+      setIsSaving(false);
+      setSaveSuccess(true);
+      
+      // Reset success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+
+      // Optional: clear form
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        trucks: '',
+        containers: '',
+        electricity: '',
+        diesel: ''
+      });
+    }, 800);
   };
 
   return (
@@ -50,6 +90,13 @@ const DataInput: React.FC = () => {
         <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Registro de Actividad</h2>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Complete los datos de la jornada para calcular la huella de carbono operacional.</p>
       </div>
+
+      {saveSuccess && (
+        <div className="mb-6 p-4 bg-primary/10 border border-primary/30 rounded-xl flex items-center gap-3 animate-in zoom-in duration-300">
+          <span className="material-symbols-outlined text-primary">check_circle</span>
+          <p className="text-sm font-bold text-primary uppercase tracking-tight">Datos guardados correctamente en la base local.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Form Card */}
@@ -71,6 +118,7 @@ const DataInput: React.FC = () => {
                 </label>
                 <input 
                   name="date"
+                  required
                   value={formData.date}
                   onChange={handleInputChange}
                   className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-lg text-sm focus:ring-primary focus:border-primary dark:text-white" 
@@ -84,11 +132,18 @@ const DataInput: React.FC = () => {
               <InputField label="Consumo Diesel" name="diesel" unit="Lts" icon="ev_station" value={formData.diesel} onChange={handleInputChange} />
 
               <div className="col-span-1 md:col-span-2 pt-4 flex gap-4">
-                <button className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20" type="submit">
-                  <span className="material-symbols-outlined">save</span>
-                  Guardar Datos
+                <button 
+                  disabled={isSaving}
+                  className={`flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                  type="submit"
+                >
+                  <span className={`material-symbols-outlined ${isSaving ? 'animate-spin' : ''}`}>
+                    {isSaving ? 'sync' : 'save'}
+                  </span>
+                  {isSaving ? 'Guardando...' : 'Guardar Datos'}
                 </button>
                 <button 
+                  disabled={isSaving}
                   onClick={() => setFormData({ date: new Date().toISOString().split('T')[0], trucks: '', containers: '', electricity: '', diesel: '' })}
                   className="px-6 py-3 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 font-bold rounded-lg transition-colors border border-slate-200 dark:border-white/10" 
                   type="button"
@@ -102,7 +157,7 @@ const DataInput: React.FC = () => {
           <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl p-4 flex gap-4">
             <span className="material-symbols-outlined text-primary">info</span>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              <strong>Nota:</strong> Los factores de emisión se actualizan mensualmente según las normativas del Ministerio de Medio Ambiente. Asegúrese de ingresar los valores netos de facturación.
+              <strong>Nota:</strong> Los datos se guardarán en el historial local de este navegador. Para persistencia centralizada, contacte a soporte IT.
             </p>
           </div>
         </div>
@@ -187,19 +242,37 @@ const IntensityRow: React.FC<{ label: string, value: string }> = ({ label, value
   </div>
 );
 
-const RecentRecords: React.FC = () => (
-  <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
-    <div className="flex items-center justify-between mb-4">
-      <h4 className="text-sm font-bold text-slate-800 dark:text-white">Últimos Registros</h4>
-      <button className="text-[10px] font-bold text-primary hover:underline">Ver todo</button>
+const RecentRecords: React.FC = () => {
+  const [localData, setLocalData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
+    setLocalData(data.slice(0, 3));
+  }, []);
+
+  return (
+    <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-sm font-bold text-slate-800 dark:text-white">Registros Guardados</h4>
+        <button className="text-[10px] font-bold text-primary hover:underline">Ver todo</button>
+      </div>
+      <div className="space-y-3">
+        {localData.length > 0 ? localData.map((item, idx) => (
+          <RecordItem 
+            key={idx}
+            date={item.dateStr.split(' ')[0]} 
+            month={item.dateStr.split(' ')[1]} 
+            value={`${item.emissions.toFixed(2)} tCO₂e`} 
+            detail={item.origin} 
+            status="success" 
+          />
+        )) : (
+          <p className="text-[10px] text-slate-400 font-bold uppercase text-center py-4">Sin registros recientes</p>
+        )}
+      </div>
     </div>
-    <div className="space-y-3">
-      <RecordItem date="24" month="Oct" value="12.4 tCO₂e" detail="142 camiones" status="success" />
-      <RecordItem date="23" month="Oct" value="15.8 tCO₂e" detail="188 camiones" status="success" />
-      <RecordItem date="22" month="Oct" value="Feriado" detail="Sin actividad" status="blocked" />
-    </div>
-  </div>
-);
+  );
+};
 
 const RecordItem: React.FC<{ date: string, month: string, value: string, detail: string, status: string }> = ({ date, month, value, detail, status }) => (
   <div className={`flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer border-l-4 ${status === 'success' ? 'border-primary' : 'border-slate-200'}`}>
