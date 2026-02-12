@@ -51,7 +51,6 @@ const DataInput: React.FC = () => {
 
     setIsSaving(true);
     
-    // Simulate a brief delay for UX
     setTimeout(() => {
       const newRecord = {
         id: `#PC-26-USR-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -60,20 +59,20 @@ const DataInput: React.FC = () => {
         origin: 'Ingreso Manual App',
         emissions: estimations.total,
         capture: 0,
-        status: 'EN REVISIÓN'
+        status: 'EN REVISIÓN',
+        isManual: true,
+        // Guardamos datos crudos para edición posterior
+        raw: { ...formData }
       };
 
-      // Persistence in LocalStorage
       const existingData = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
       localStorage.setItem('puerto_columbo_user_data', JSON.stringify([newRecord, ...existingData]));
 
       setIsSaving(false);
       setSaveSuccess(true);
       
-      // Reset success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
 
-      // Optional: clear form
       setFormData({
         date: new Date().toISOString().split('T')[0],
         trucks: '',
@@ -81,6 +80,9 @@ const DataInput: React.FC = () => {
         electricity: '',
         diesel: ''
       });
+      
+      // Emitir evento personalizado para que otras pestañas se enteren del cambio
+      window.dispatchEvent(new Event('localDataChanged'));
     }, 800);
   };
 
@@ -99,7 +101,6 @@ const DataInput: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Form Card */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
@@ -153,16 +154,8 @@ const DataInput: React.FC = () => {
               </div>
             </form>
           </div>
-
-          <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl p-4 flex gap-4">
-            <span className="material-symbols-outlined text-primary">info</span>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              <strong>Nota:</strong> Los datos se guardarán en el historial local de este navegador. Para persistencia centralizada, contacte a soporte IT.
-            </p>
-          </div>
         </div>
 
-        {/* Real-time Summary Sidebar */}
         <div className="space-y-6 lg:sticky lg:top-24">
           <div className="bg-slate-900 rounded-xl p-6 text-white shadow-xl border border-slate-800">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center justify-between">
@@ -173,7 +166,6 @@ const DataInput: React.FC = () => {
             <div className="space-y-6">
               <EstimationRow label="tCO₂ Electricidad" value={estimations.electricityCo2.toFixed(4)} icon="bolt" />
               <EstimationRow label="tCO₂ Diesel" value={estimations.dieselCo2.toFixed(4)} icon="oil_barrel" />
-              
               <div className="bg-primary/10 rounded-lg p-4 border border-primary/30">
                 <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Emisiones Totales</p>
                 <div className="flex items-baseline gap-2">
@@ -182,19 +174,7 @@ const DataInput: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <div className="mt-8 space-y-4">
-              <IntensityRow 
-                label="Intensidad / Camión" 
-                value={formData.trucks && estimations.total > 0 ? `${(estimations.total / parseFloat(formData.trucks)).toFixed(4)} tCO₂` : "-- tCO₂"} 
-              />
-              <IntensityRow 
-                label="Intensidad / Cont." 
-                value={formData.containers && estimations.total > 0 ? `${(estimations.total / parseFloat(formData.containers)).toFixed(4)} tCO₂` : "-- tCO₂"} 
-              />
-            </div>
           </div>
-
           <RecentRecords />
         </div>
       </div>
@@ -232,22 +212,18 @@ const EstimationRow: React.FC<{ label: string, value: string, icon: string }> = 
   </div>
 );
 
-const IntensityRow: React.FC<{ label: string, value: string }> = ({ label, value }) => (
-  <div className="bg-slate-800/40 p-3 rounded-lg flex items-center justify-between border border-slate-700/50">
-    <div className="flex items-center gap-2">
-      <span className="material-symbols-outlined text-xs text-slate-500">trending_up</span>
-      <span className="text-xs font-medium text-slate-300">{label}</span>
-    </div>
-    <span className="text-xs font-bold text-white">{value}</span>
-  </div>
-);
-
 const RecentRecords: React.FC = () => {
   const [localData, setLocalData] = useState<any[]>([]);
 
-  useEffect(() => {
+  const loadData = () => {
     const data = JSON.parse(localStorage.getItem('puerto_columbo_user_data') || '[]');
     setLocalData(data.slice(0, 3));
+  };
+
+  useEffect(() => {
+    loadData();
+    window.addEventListener('localDataChanged', loadData);
+    return () => window.removeEventListener('localDataChanged', loadData);
   }, []);
 
   return (
