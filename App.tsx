@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -11,6 +11,23 @@ import Profile from './components/Profile';
 
 const App: React.FC = () => {
   const location = useLocation();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
   
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -33,10 +50,15 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-300">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <Header title={getPageTitle()} breadcrumb={getBreadcrumb()} />
+        <Header 
+          title={getPageTitle()} 
+          breadcrumb={getBreadcrumb()} 
+          isDarkMode={isDarkMode} 
+          toggleDarkMode={toggleDarkMode} 
+        />
         <main className="p-4 md:p-8 max-w-7xl mx-auto w-full">
           <Routes>
             <Route path="/" element={<Dashboard />} />

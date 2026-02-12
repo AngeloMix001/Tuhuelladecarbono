@@ -21,6 +21,19 @@ const SOURCE_DATA = [
   { name: 'Electricidad', value: 30 },
 ];
 
+// Componente para el punto pulsante en el gráfico
+const PulsingDot = (props: any) => {
+  const { cx, cy, payload } = props;
+  if (payload.name !== 'JUN') return null; // Solo en el último punto para efecto de "ahora"
+
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={8} fill={COLORS.primary} className="animate-ping opacity-75" />
+      <circle cx={cx} cy={cy} r={6} fill={COLORS.primary} stroke="#fff" strokeWidth={2} />
+    </g>
+  );
+};
+
 const Dashboard: React.FC = () => {
   const kpis = {
     totalEmissions: "1,245.8 tCO2",
@@ -31,6 +44,19 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 relative pb-10">
+      <style>{`
+        @keyframes lineGlow {
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(17, 212, 33, 0.4)); opacity: 0.9; }
+          50% { filter: drop-shadow(0 0 8px rgba(17, 212, 33, 0.8)); opacity: 1; }
+        }
+        .animate-line-glow {
+          animation: lineGlow 3s ease-in-out infinite;
+        }
+        .recharts-area-path {
+          transition: all 0.5s ease;
+        }
+      `}</style>
+
       {/* AI Component */}
       <AiInsights data={EVOLUTION_DATA} kpis={kpis} />
 
@@ -81,7 +107,7 @@ const Dashboard: React.FC = () => {
         />
       </section>
 
-      {/* Main Charts: Curva de Reducción Mensual */}
+      {/* Main Charts: Curva de Reducción Mensual con Movimiento */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white dark:bg-white/5 p-8 rounded-3xl border border-neutral-green-100 dark:border-white/10 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5">
@@ -139,16 +165,6 @@ const Dashboard: React.FC = () => {
                 />
                 <Area 
                   type="monotone" 
-                  dataKey="balance" 
-                  name="Balance Neto" 
-                  stroke={COLORS.primary} 
-                  strokeWidth={4} 
-                  fillOpacity={1} 
-                  fill="url(#colorBalance)" 
-                  activeDot={{ r: 8, strokeWidth: 0, fill: COLORS.primary }}
-                />
-                <Area 
-                  type="monotone" 
                   dataKey="target" 
                   name="Meta Proyectada" 
                   stroke={COLORS.slate500} 
@@ -157,6 +173,23 @@ const Dashboard: React.FC = () => {
                   strokeOpacity={0.5}
                   fillOpacity={1} 
                   fill="url(#colorTarget)" 
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="balance" 
+                  name="Balance Neto" 
+                  stroke={COLORS.primary} 
+                  strokeWidth={4} 
+                  fillOpacity={1} 
+                  fill="url(#colorBalance)" 
+                  activeDot={{ r: 8, strokeWidth: 0, fill: COLORS.primary }}
+                  dot={<PulsingDot />}
+                  className="animate-line-glow"
+                  isAnimationActive={true}
+                  animationDuration={2000}
+                  animationEasing="ease-in-out"
                 />
               </AreaChart>
             </ResponsiveContainer>

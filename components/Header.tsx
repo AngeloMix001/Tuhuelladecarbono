@@ -4,11 +4,13 @@ import React from 'react';
 interface HeaderProps {
   title: string;
   breadcrumb: string;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, breadcrumb }) => {
+const Header: React.FC<HeaderProps> = ({ title, breadcrumb, isDarkMode, toggleDarkMode }) => {
   return (
-    <header className="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-neutral-green-100 dark:border-neutral-green-900 px-8 py-4 flex items-center justify-between">
+    <header className="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-neutral-green-100 dark:border-neutral-green-900 px-8 py-4 flex items-center justify-between transition-colors duration-300">
       <div>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{breadcrumb}</p>
         <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{title}</h2>
@@ -25,6 +27,16 @@ const Header: React.FC<HeaderProps> = ({ title, breadcrumb }) => {
         </div>
         
         <div className="flex items-center gap-4 pl-4 border-l border-slate-200 dark:border-slate-800">
+          <button 
+            onClick={toggleDarkMode}
+            className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-all flex items-center justify-center"
+            title={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          >
+            <span className="material-symbols-outlined text-2xl">
+              {isDarkMode ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+          
           <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full relative transition-colors">
             <span className="material-symbols-outlined">notifications</span>
             <span className="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-background-dark"></span>
