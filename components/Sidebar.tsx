@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAVIGATION_ITEMS } from '../constants';
@@ -17,6 +16,8 @@ const LogoTC = () => (
 );
 
 const Sidebar: React.FC = () => {
+  const complianceValue = 84; // Valor actualizado consistentemente
+
   return (
     <aside className="w-64 bg-white dark:bg-background-dark border-r border-neutral-green-100 dark:border-neutral-green-900 flex flex-col shrink-0">
       <div className="p-6 flex flex-col gap-1">
@@ -54,11 +55,14 @@ const Sidebar: React.FC = () => {
         <div className="p-4 bg-neutral-green-50 dark:bg-white/5 rounded-2xl border border-neutral-green-100 dark:border-white/10 shadow-sm">
           <p className="text-[10px] font-black text-neutral-green-800 dark:text-primary uppercase tracking-widest mb-2">Impacto Vetiver</p>
           <div className="w-full bg-neutral-green-200 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-            <div className="bg-primary h-full w-[72%] shadow-[0_0_8px_rgba(17,212,33,0.5)]"></div>
+            <div 
+              className="bg-primary h-full shadow-[0_0_8px_rgba(17,212,33,0.5)] transition-all duration-1000" 
+              style={{ width: `${complianceValue}%` }}
+            ></div>
           </div>
           <div className="flex justify-between items-center mt-2">
             <p className="text-[10px] text-neutral-green-600 dark:text-slate-500 font-bold">Meta 2024</p>
-            <p className="text-[10px] text-primary font-black">72%</p>
+            <p className="text-[10px] text-primary font-black">{complianceValue}%</p>
           </div>
         </div>
         
