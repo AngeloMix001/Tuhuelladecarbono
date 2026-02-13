@@ -1,5 +1,5 @@
 {
-  "name": "Puerto Columbo CO2 Management System",
-  "description": "A high-end environmental impact monitoring and carbon sequestration dashboard for industrial port operations, featuring real-time data entry, historical reporting, and visual analytics.",
+  "name": "Puerto Columbo CO2 Panel",
+  "description": "A comprehensive carbon footprint management and environmental monitoring dashboard for Puerto Columbo S.A., featuring real-time tracking of emissions, CO2 capture via Vetiver systems, and operational data analytics.",
   "requestFramePermissions": []
 }

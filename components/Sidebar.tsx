@@ -1,104 +1,109 @@
 
-import React from 'react';
-import { Page } from '../types';
+import React, { memo } from 'react';
+import { NavLink } from 'react-router-dom';
+import { NAVIGATION_ITEMS } from '../constants';
 
 interface SidebarProps {
-  activePage: Page;
-  onNavigate: (page: Page) => void;
-  isCollapsed: boolean;
-  onToggle: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isCollapsed, onToggle }) => {
-  const navItems = [
-    { id: 'dashboard' as Page, label: 'Dashboard', icon: 'dashboard' },
-    { id: 'data-entry' as Page, label: 'Ingreso de Datos', icon: 'database' },
-    { id: 'vetiver' as Page, label: 'Proyecto Vetiver', icon: 'psychology_alt' },
-    { id: 'reports' as Page, label: 'Reportes', icon: 'description' },
-    { id: 'profile' as Page, label: 'Perfil', icon: 'person' },
-  ];
+const LogoTC = memo(() => (
+  <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+    <path d="M60 10H85L70 35H45L60 10Z" fill="#11d421" /> 
+    <path d="M20 40H75L60 65H5L20 40Z" fill="#3b82f6" /> 
+    <path d="M5 70H30L15 95H-10L5 70Z" fill="#11d421" /> 
+    <path d="M78 40C88 40 95 48 95 60C95 72 88 80 78 80H70L80 60L70 40H78Z" fill="#3b82f6" fillOpacity="0.9" />
+    <path d="M78 80C88 80 95 88 95 95H70C70 88 75 82 78 80Z" fill="#3b82f6" />
+  </svg>
+));
 
-  const handleNavigate = (id: Page) => {
-    onNavigate(id);
-    if (window.innerWidth < 1024) {
-      onToggle(); // Close sidebar on mobile after navigation
-    }
-  };
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
+  const complianceValue = 84;
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {!isCollapsed && (
+      {/* Overlay para móvil */}
+      {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={onToggle}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] lg:hidden transition-opacity animate-in fade-in duration-300" 
+          onClick={onClose}
         />
       )}
 
-      <aside className={`bg-white dark:bg-background-dark flex flex-col border-r border-slate-200 dark:border-slate-800 shrink-0 h-full fixed lg:relative z-50 transition-all duration-300 ${isCollapsed ? '-translate-x-full lg:translate-x-0 lg:w-20' : 'translate-x-0 w-64'}`}>
-        <div className="p-4 flex flex-col h-full">
-          {/* Header / Logo */}
-          <div className={`flex items-center gap-3 mb-10 mt-2 ${isCollapsed ? 'justify-center' : 'px-2'}`}>
-            <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0">
-              <span className="material-symbols-outlined text-xl font-bold">eco</span>
-            </div>
-            {!isCollapsed && (
-              <div className="overflow-hidden whitespace-nowrap">
-                <h1 className="text-slate-900 dark:text-white font-bold text-base leading-tight">Panel CO₂</h1>
-                <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Puerto Columbo S.A.</p>
+      <aside className={`
+        fixed inset-y-0 left-0 z-[70] w-64 bg-white dark:bg-background-dark border-r border-neutral-green-100 dark:border-neutral-green-900 flex flex-col shrink-0 
+        transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:block
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-6 flex flex-col h-full gap-1">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <LogoTC />
+              <div>
+                <h1 className="text-slate-900 dark:text-white text-sm font-black leading-tight uppercase tracking-tight">Puerto Columbo</h1>
+                <p className="text-neutral-green-600 dark:text-primary text-[10px] font-black uppercase tracking-[0.2em]">Gestión de Carbono</p>
               </div>
-            )}
+            </div>
+            {/* Botón de cerrar solo en móvil */}
+            <button 
+              onClick={onClose} 
+              className="lg:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
           </div>
 
-          {/* Toggle Button (Desktop Only) */}
-          <button 
-            onClick={onToggle}
-            className={`hidden lg:flex absolute -right-3 top-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 size-6 rounded-full items-center justify-center shadow-sm hover:text-primary transition-all z-30`}
-          >
-            <span className={`material-symbols-outlined text-base transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}>
-              chevron_left
-            </span>
-          </button>
-
-          {/* Navigation */}
-          <nav className="space-y-1 flex-1">
-            {navItems.map((item) => (
-              <button
+          <nav className="flex flex-col gap-1">
+            {NAVIGATION_ITEMS.map((item) => (
+              <NavLink
                 key={item.id}
-                onClick={() => handleNavigate(item.id)}
-                title={isCollapsed ? item.label : ''}
-                className={`w-full flex items-center gap-3 py-3 rounded-xl transition-all font-semibold text-sm ${
-                  isCollapsed ? 'justify-center px-0' : 'px-4'
-                } ${
-                  activePage === item.id
-                    ? 'bg-primary/10 text-primary border-r-4 border-primary lg:rounded-r-none'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                to={item.path}
+                className={({ isActive }) => 
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                    isActive 
+                      ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary' 
+                      : 'text-slate-600 hover:bg-neutral-green-50 dark:hover:bg-white/5 dark:text-slate-400'
+                  }`
+                }
               >
-                <span className={`material-symbols-outlined text-[22px] shrink-0 ${activePage === item.id ? 'material-symbols-fill' : ''}`}>
-                  {item.icon}
-                </span>
-                {(!isCollapsed || window.innerWidth < 1024) && <span className="overflow-hidden whitespace-nowrap">{item.label}</span>}
-              </button>
+                <span className="material-symbols-outlined">{item.icon}</span>
+                <span className="text-sm">{item.label}</span>
+              </NavLink>
             ))}
+            
+            <button 
+              onClick={onLogout}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all mt-2"
+            >
+              <span className="material-symbols-outlined">logout</span>
+              <span className="text-sm">Cerrar Sesión</span>
+            </button>
           </nav>
 
-          {/* Footer / User */}
-          <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
-            <div className={`flex items-center gap-3 p-2 bg-slate-50 dark:bg-white/5 rounded-xl ${isCollapsed ? 'justify-center px-0' : ''}`}>
-              <div className="size-9 rounded-full bg-slate-900 dark:bg-primary/20 flex items-center justify-center text-white text-[10px] font-black overflow-hidden shrink-0">
-                <img 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsaS_735kAGpjPmKPLToL_40ywG8cMUsVzZgFGelK4NGK0mY3yoWCqUh3xTFzC6U6Ry5BRR595Rky-8kjknDqGArPLXzjLHymMjSkB5fJw3X82vZnbAAW6GmriSebuCbCnVSxukSFRjbjJUL01Zfs3c3z3-jWDHeF3dojmOw6Ep-DmQ-WO1oCuyugQFjNzh-SZqsZ7Rc_6-JO3yDprgTpVjU7lUmV7rps3isw1wo9O3VATwHn-BeZ12CVKhVu42OesN6fHIchmxG8" 
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
+          <div className="mt-auto flex flex-col gap-4">
+            <div className="p-4 bg-neutral-green-50 dark:bg-white/5 rounded-2xl border border-neutral-green-100 dark:border-white/10 shadow-sm">
+              <p className="text-[10px] font-black text-neutral-green-800 dark:text-primary uppercase tracking-widest mb-2">Impacto Vetiver</p>
+              <div className="w-full bg-neutral-green-200 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+                <div 
+                  className="bg-primary h-full shadow-[0_0_8px_rgba(17,212,33,0.5)] transition-all duration-1000" 
+                  style={{ width: `${complianceValue}%` }}
+                ></div>
               </div>
-              {(!isCollapsed || window.innerWidth < 1024) && (
-                <div className="overflow-hidden whitespace-nowrap">
-                  <p className="text-xs font-black text-slate-900 dark:text-white truncate">Carlos Rodriguez</p>
-                  <p className="text-[9px] text-slate-500 font-bold truncate">Gestor Ambiental</p>
-                </div>
-              )}
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-[10px] text-neutral-green-600 dark:text-slate-500 font-bold">Meta 2027</p>
+                <p className="text-[10px] text-primary font-black">{complianceValue}%</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 group cursor-pointer hover:border-primary/50 transition-all">
+              <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-700 bg-cover bg-center shadow-sm" style={{ backgroundImage: "url('https://picsum.photos/seed/angel/100')" }}></div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-black text-slate-800 dark:text-white truncate">Angel Gutierrez</p>
+                <p className="text-[10px] text-slate-500 font-bold truncate">Gestor Ambiental</p>
+              </div>
+              <span className="material-symbols-outlined text-sm text-slate-400 ml-auto group-hover:text-primary transition-colors">settings</span>
             </div>
           </div>
         </div>
@@ -107,4 +112,4 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isCollapsed, 
   );
 };
 
-export default Sidebar;
+export default memo(Sidebar);
