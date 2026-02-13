@@ -6,31 +6,8 @@ import * as ReactWindow from 'react-window';
 const FixedSizeList = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?.FixedSizeList;
 
 const generateMockData = (count: number) => {
-  const origins = [
-    'Terminal Marítimo A1', 
-    'Reserva Forestal Puerto', 
-    'Planta Logística Norte', 
-    'Terminal Marítimo A2', 
-    'Parque Solar Interno'
-  ];
-  const statuses = ['VALIDADO', 'EN REVISIÓN'] as const;
-  
-  return Array.from({ length: count }, (_, i) => {
-    const day = (i % 28) + 1;
-    const month = (i % 12);
-    const date = new Date(2026, month, day);
-    
-    return {
-      id: `#PC-26-${55300 - i}`,
-      dateObj: date,
-      dateStr: date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
-      origin: origins[i % origins.length],
-      emissions: i % 3 === 0 ? Math.random() * 30 : 0,
-      capture: i % 3 !== 0 ? Math.random() * 45 : 0,
-      status: statuses[i % 2],
-      isManual: false
-    };
-  });
+  // Returns empty array to clear simulated records as requested
+  return [];
 };
 
 const COLUMN_LAYOUT = "grid grid-cols-[140px_100px_1fr_100px_100px_120px_100px]";
@@ -203,7 +180,7 @@ const Reports: React.FC = () => {
   const [weeklyReports, setWeeklyReports] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<'all' | 'manual' | 'weekly'>('all');
-  const mockData = useMemo(() => generateMockData(2000), []);
+  const mockData = useMemo(() => generateMockData(0), []);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -317,7 +294,7 @@ const Reports: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Auditoría Histórica 2026</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Informes</h1>
           <p className="text-slate-500 mt-1 font-medium">Visualización de reportes manuales, sistémicos y consolidados.</p>
         </div>
         <div className="flex items-center gap-3">

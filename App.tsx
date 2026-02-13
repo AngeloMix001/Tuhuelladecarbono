@@ -59,7 +59,7 @@ const App: React.FC = () => {
     switch (location.pathname) {
       case '/ingreso': return 'Ingreso de Datos Operativos';
       case '/vetiver': return 'Configuración de Captura CO₂';
-      case '/reportes': return 'Reportes y Exportación';
+      case '/reportes': return 'Informes';
       case '/perfil': return 'Cuenta / Perfil';
       default: return 'Panel CO₂ Dashboard';
     }
@@ -69,7 +69,7 @@ const App: React.FC = () => {
     switch (location.pathname) {
       case '/ingreso': return 'Gestión de CO₂ / Ingreso de Datos';
       case '/vetiver': return 'Gestión de CO₂ / Proyecto Vetiver';
-      case '/reportes': return 'Gestión de CO₂ / Reportes';
+      case '/reportes': return 'Gestión de CO₂ / Informes';
       case '/perfil': return 'Cuenta / Perfil';
       default: return 'Gestión de Carbono';
     }

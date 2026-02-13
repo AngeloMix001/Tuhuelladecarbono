@@ -16,6 +16,6 @@ export const NAVIGATION_ITEMS = [
   { id: 'dashboard', label: 'Panel Principal', icon: 'dashboard', path: '/' },
   { id: 'datainput', label: 'Ingreso de Datos', icon: 'edit_square', path: '/ingreso' },
   { id: 'vetiver', label: 'Proyecto Vetiver', icon: 'eco', path: '/vetiver' },
-  { id: 'reports', label: 'Informes y Reportes', icon: 'description', path: '/reportes' },
+  { id: 'reports', label: 'Informes', icon: 'description', path: '/reportes' },
   { id: 'profile', label: 'Perfil', icon: 'person', path: '/perfil' },
 ];
