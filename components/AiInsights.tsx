@@ -226,8 +226,9 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
       }
 
       // Primera llamada: El modelo decide si usa herramientas
+      // Usamos 'gemini-3-flash-preview' por ser el modelo multimodal estable para generateContent
       let response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+        model: 'gemini-3-flash-preview',
         contents: { parts: contentsParts },
         config: {
           systemInstruction,
@@ -249,7 +250,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
 
         // Segunda llamada con resultados de herramientas
         const finalResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+          model: 'gemini-3-flash-preview',
           contents: {
             parts: [
               ...contentsParts,
@@ -268,7 +269,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
 
     } catch (error) {
       console.error("Agent Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Error en el procesamiento. Asegúrate de que el micrófono esté bien configurado." }]);
+      setMessages(prev => [...prev, { role: 'model', text: "Error en el procesamiento de la IA. Por favor, reintenta tu consulta." }]);
     } finally {
       setLoading(false);
     }
