@@ -30,7 +30,7 @@ const PROJECTION_DATA = [
   { label: '2,400 kg', h: '55%', year: '2023', desc: 'Maduración plena', depth: 0.85 },
   { label: '3,100 kg', h: '75%', year: '2024', desc: 'Capacidad óptima', depth: 1.0 },
   { label: '3,800 kg', h: '90%', year: '2025', desc: 'Fase expansiva', depth: 1.15 },
-  { label: '4,200 kg', h: '100%', year: '2026', desc: 'Máximo biológico', highlight: true, depth: 1.25 },
+  { label: '4,200 kg', h: '100%', year: '2026', desc: 'Máximo biológico', highlight: true, depth: 1.4 },
 ];
 
 const GROWTH_FACTORS = {
@@ -39,7 +39,7 @@ const GROWTH_FACTORS = {
   'Consolidado (Año 6+)': 18.5,
 };
 
-// --- Optimized Three.js Visualization Component ---
+// --- New "Bioscan Hologram" 3D Stage ---
 
 interface ThreeRootStageProps {
   depth: number;
@@ -52,51 +52,53 @@ const ThreeRootStage: React.FC<ThreeRootStageProps> = ({ depth, year, color }) =
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rootMeshRef = useRef<THREE.Group | null>(null);
+  const rootsGroupRef = useRef<THREE.Group | null>(null);
+  const particlesRef = useRef<THREE.Points | null>(null);
+  const scannerRef = useRef<THREE.Mesh | null>(null);
   const requestRef = useRef<number>(0);
 
-  // Memoize materials and geometries for reuse
-  const boxGeometry = useMemo(() => new THREE.BoxGeometry(1.6, 3, 1.6), []);
-  const cubeMaterial = useMemo(() => new THREE.MeshPhongMaterial({ 
-    color: 0x14100b, 
+  // Materiales reutilizables
+  const rootMaterial = useMemo(() => new THREE.LineBasicMaterial({ 
+    color: new THREE.Color(color), 
     transparent: true, 
-    opacity: 0.95,
-    shininess: 5 
-  }), []);
-  
-  const rootMaterial = useMemo(() => new THREE.MeshLambertMaterial({ 
-    color: color,
-    emissive: color,
-    emissiveIntensity: 0.2
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending
   }), [color]);
 
-  // Procedural Root System Generator
-  const generateRootSystem = useCallback((depthScale: number) => {
+  const particleMaterial = useMemo(() => new THREE.PointsMaterial({
+    color: new THREE.Color(color),
+    size: 0.04,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
+  }), [color]);
+
+  // Generador de raíces tipo "Fibra Óptica"
+  const generateHolographicRoots = useCallback((depthScale: number) => {
     const group = new THREE.Group();
-    const numRoots = 15;
-    const rootSegments = 16;
+    const numRoots = 120; // Más densidad para look tecnológico
     
     for (let i = 0; i < numRoots; i++) {
       const points = [];
-      const spread = 0.35;
-      const angle = (i / numRoots) * Math.PI * 2;
-      const radius = 0.1 + Math.random() * 0.2;
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * 0.4;
       
-      for (let j = 0; j <= rootSegments; j++) {
-        const t = j / rootSegments;
-        const wiggleX = (Math.random() - 0.5) * 0.15 * t;
-        const wiggleZ = (Math.random() - 0.5) * 0.15 * t;
-        const x = Math.cos(angle) * radius + wiggleX + (Math.cos(angle) * spread * t);
-        const z = Math.sin(angle) * radius + wiggleZ + (Math.sin(angle) * spread * t);
-        const y = 1.5 - (t * 3 * depthScale); // From top of box down
-        points.push(new THREE.Vector3(x, y, z));
+      // Raíces de Vetiver son famosas por ser muy verticales y profundas
+      const segments = 12;
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        const x = Math.cos(angle) * radius * (1 + t * 0.5);
+        const z = Math.sin(angle) * radius * (1 + t * 0.5);
+        const y = 1.5 - (t * 4 * depthScale); // Crecimiento vertical hacia abajo
+        
+        // Añadir una pequeña distorsión orgánica
+        const noise = (Math.random() - 0.5) * 0.05 * t;
+        points.push(new THREE.Vector3(x + noise, y, z + noise));
       }
       
-      const curve = new THREE.CatmullRomCurve3(points);
-      // Limit radial segments for performance
-      const geometry = new THREE.TubeGeometry(curve, 16, 0.015 * (1.1 - points[points.length-1].y / 1.5), 6, false);
-      const tube = new THREE.Mesh(geometry, rootMaterial);
-      group.add(tube);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, rootMaterial);
+      group.add(line);
     }
     return group;
   }, [rootMaterial]);
@@ -107,54 +109,90 @@ const ThreeRootStage: React.FC<ThreeRootStageProps> = ({ depth, year, color }) =
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
 
-    // Scene Setup
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.set(5, 3, 6.5);
-    camera.lookAt(0, -0.5, 0);
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(0, 1, 7);
+    camera.lookAt(0, -1, 0);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
-    renderer.setClearColor(0x000000, 0);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Lighting
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
-    scene.add(hemiLight);
+    // Pedestal Holográfico
+    const baseGeom = new THREE.RingGeometry(0.8, 0.9, 64);
+    const baseMat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, transparent: true, opacity: 0.3 });
+    const base = new THREE.Mesh(baseGeom, baseMat);
+    base.rotation.x = Math.PI / 2;
+    base.position.y = 1.55;
+    scene.add(base);
 
-    const pointLight = new THREE.PointLight(color, 1.5, 12);
-    pointLight.position.set(0, 2, 0);
-    scene.add(pointLight);
+    const baseFill = new THREE.Mesh(new THREE.CircleGeometry(0.8, 64), new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.05 }));
+    baseFill.rotation.x = Math.PI / 2;
+    baseFill.position.y = 1.55;
+    scene.add(baseFill);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 7);
-    scene.add(dirLight);
+    // Sistema de Escaneo
+    const scanGeom = new THREE.CylinderGeometry(1.2, 1.2, 0.02, 32, 1, true);
+    const scanMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+    const scanner = new THREE.Mesh(scanGeom, scanMat);
+    scannerRef.current = scanner;
+    scene.add(scanner);
 
-    // Visual Elements
-    const soil = new THREE.Mesh(boxGeometry, cubeMaterial);
-    scene.add(soil);
+    // Partículas de CO2 (Captura)
+    const partCount = 200;
+    const partGeom = new THREE.BufferGeometry();
+    const positions = new Float32Array(partCount * 3);
+    for (let i = 0; i < partCount * 3; i++) positions[i] = (Math.random() - 0.5) * 6;
+    partGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particles = new THREE.Points(partGeom, particleMaterial);
+    particlesRef.current = particles;
+    scene.add(particles);
 
-    const roots = generateRootSystem(depth);
+    // Raíces iniciales
+    const roots = generateHolographicRoots(depth);
+    rootsGroupRef.current = roots;
     scene.add(roots);
-    rootMeshRef.current = roots;
 
-    // Animation Loop
     const animate = () => {
       if (!renderer || !scene || !camera) return;
       
-      scene.rotation.y += 0.004;
+      const time = Date.now() * 0.001;
       
-      // Dynamic sway for roots
-      if (rootMeshRef.current) {
-        rootMeshRef.current.children.forEach((root, idx) => {
-          root.rotation.z = Math.sin(Date.now() * 0.0008 + idx) * 0.015;
-          root.rotation.x = Math.cos(Date.now() * 0.001 + idx) * 0.015;
-        });
+      // Rotación suave del holograma
+      scene.rotation.y += 0.005;
+
+      // Animación de escaneo
+      if (scannerRef.current) {
+        scannerRef.current.position.y = Math.sin(time * 0.5) * 2 - 1;
+        scannerRef.current.scale.setScalar(1 + Math.cos(time * 0.5) * 0.2);
+      }
+
+      // Animación de partículas (succión hacia el centro/raíces)
+      if (particlesRef.current) {
+        const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+        for (let i = 0; i < partCount; i++) {
+          const ix = i * 3;
+          const iy = i * 3 + 1;
+          const iz = i * 3 + 2;
+
+          // Mover hacia el origen (pedestal)
+          positions[ix] *= 0.99;
+          positions[iz] *= 0.99;
+          positions[iy] += 0.01;
+
+          // Reset si llegan al centro
+          if (Math.abs(positions[ix]) < 0.1 && Math.abs(positions[iz]) < 0.1) {
+            positions[ix] = (Math.random() - 0.5) * 6;
+            positions[iz] = (Math.random() - 0.5) * 6;
+            positions[iy] = -4 + Math.random() * 2;
+          }
+        }
+        particlesRef.current.geometry.attributes.position.needsUpdate = true;
       }
 
       renderer.render(scene, camera);
@@ -162,7 +200,6 @@ const ThreeRootStage: React.FC<ThreeRootStageProps> = ({ depth, year, color }) =
     };
     animate();
 
-    // Resize Handler
     const handleResize = () => {
       if (!containerRef.current || !camera || !renderer) return;
       const w = containerRef.current.clientWidth;
@@ -177,47 +214,67 @@ const ThreeRootStage: React.FC<ThreeRootStageProps> = ({ depth, year, color }) =
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(requestRef.current);
       renderer.dispose();
-      if (containerRef.current) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
+      if (containerRef.current) containerRef.current.removeChild(renderer.domElement);
     };
-  }, []); // Run only on mount
+  }, []);
 
-  // Efficiently update depth without full re-mount
+  // Actualización eficiente de la profundidad
   useEffect(() => {
-    if (sceneRef.current && rootMeshRef.current) {
-      sceneRef.current.remove(rootMeshRef.current);
-      // Proper disposal of old geometries to prevent memory leaks
-      rootMeshRef.current.children.forEach((child: any) => {
-        child.geometry.dispose();
-      });
-      
-      const newRoots = generateRootSystem(depth);
+    if (sceneRef.current && rootsGroupRef.current) {
+      sceneRef.current.remove(rootsGroupRef.current);
+      rootsGroupRef.current.children.forEach((child: any) => child.geometry.dispose());
+      const newRoots = generateHolographicRoots(depth);
       sceneRef.current.add(newRoots);
-      rootMeshRef.current = newRoots;
+      rootsGroupRef.current = newRoots;
     }
-  }, [depth, generateRootSystem]);
+  }, [depth, generateHolographicRoots]);
 
   return (
-    <div ref={containerRef} className="w-full h-full bg-gradient-to-b from-slate-900 via-slate-950 to-black relative overflow-hidden">
-      <div className="absolute top-8 left-8 z-20 pointer-events-none">
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-            <span className="size-2 rounded-full bg-primary animate-pulse"></span> Bio-Engineered System 4.0
-          </span>
-          <span className="text-3xl font-black text-white tracking-tighter">{year}</span>
+    <div ref={containerRef} className="w-full h-full bg-[#050a06] relative overflow-hidden group">
+      {/* HUD Overlay */}
+      <div className="absolute inset-0 pointer-events-none p-8 flex flex-col justify-between">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="size-1.5 bg-primary rounded-full animate-ping"></span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Bioscan v4.2.1</span>
+            </div>
+            <h4 className="text-3xl font-black text-white tracking-tighter">{year}</h4>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estado Sistema</p>
+            <p className="text-xs font-black text-primary uppercase">Óptimo</p>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${depth * 70}%` }}></div>
+              </div>
+              <span className="text-[8px] font-black text-slate-500 uppercase">Profundidad</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500" style={{ width: '85%' }}></div>
+              </div>
+              <span className="text-[8px] font-black text-slate-500 uppercase">Densidad</span>
+            </div>
+          </div>
+          <div className="bg-primary/10 border border-primary/20 px-3 py-1 rounded-lg backdrop-blur-sm">
+            <span className="text-[9px] font-black text-primary uppercase tracking-widest">Certificado Carbono Negativo</span>
+          </div>
         </div>
       </div>
-      <div className="absolute bottom-8 left-8 z-20 pointer-events-none">
-        <div className="bg-black/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
-          WebGL Performance Optimized
-        </div>
-      </div>
+
+      {/* Grid decorativo */}
+      <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(17,212,33,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(17,212,33,0.1)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
     </div>
   );
 };
 
-// --- Recharts Components & Main View ---
+// --- Resto de Componentes del Dashboard ---
 
 const ImpactTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -293,11 +350,11 @@ const VetiverProject: React.FC = () => {
       <header className="flex flex-wrap justify-between items-end gap-6">
         <div className="max-w-2xl">
           <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-3 uppercase">Mitigación Consolidada 2026</h2>
-          <p className="text-neutral-green-600 text-xl font-medium">Estamos en 2026. Análisis de impacto final hacia la meta neta negativa de 2027.</p>
+          <p className="text-neutral-green-600 text-xl font-medium">Análisis avanzado de captura biológica mediante el Sistema Vetiver.</p>
         </div>
         <div className="flex gap-4">
           <button className="bg-primary text-white px-6 py-3 rounded-[20px] flex items-center gap-3 text-xs font-black shadow-xl hover:scale-105 active:scale-95 transition-all group">
-             <span className="material-symbols-outlined text-lg">public</span> CERTIFICACIÓN 2026
+             <span className="material-symbols-outlined text-lg">verified_user</span> AUDITORÍA 2026
           </button>
         </div>
       </header>
@@ -311,12 +368,12 @@ const VetiverProject: React.FC = () => {
               <div className="max-w-md">
                 <div className="flex items-center gap-5 mb-4">
                   <div className="size-16 rounded-[24px] bg-primary/20 border border-primary/30 flex items-center justify-center shadow-inner">
-                    <span className="material-symbols-outlined text-primary text-4xl animate-pulse">radar</span>
+                    <span className="material-symbols-outlined text-primary text-4xl animate-pulse">monitoring</span>
                   </div>
-                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Impacto 2026</h3>
+                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Impacto Consolidado</h3>
                 </div>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  Consolidación de la trayectoria de descarbonización. El sistema valida el balance negativo logrado en 2026.
+                  Consolidación de la trayectoria de descarbonización. El sistema valida el balance negativo logrado en 2026 mediante sumideros biológicos.
                 </p>
               </div>
               
@@ -352,7 +409,7 @@ const VetiverProject: React.FC = () => {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-           <section className="bg-slate-950 rounded-[56px] overflow-hidden border border-white/10 shadow-3xl h-[600px] relative ring-1 ring-white/5 group">
+           <section className="bg-[#050a06] rounded-[56px] overflow-hidden border border-white/10 shadow-3xl h-[600px] relative ring-1 ring-white/5 group">
               <ThreeRootStage depth={selectedData.depth} year={selectedData.year} color={COLORS.primary} />
               <div className="absolute top-1/2 right-8 -translate-y-1/2 flex flex-col gap-4 z-20">
                 {PROJECTION_DATA.map((d, i) => (
@@ -369,15 +426,15 @@ const VetiverProject: React.FC = () => {
 
            <section className="bg-white dark:bg-white/5 p-10 rounded-[48px] border border-primary/20 shadow-2xl relative overflow-hidden group">
               <h3 className="text-xl font-black mb-8 flex items-center gap-4 dark:text-white uppercase tracking-tighter">
-                <span className="material-symbols-outlined text-primary text-2xl">analytics</span> Simulador Meta 2027
+                <span className="material-symbols-outlined text-primary text-2xl">science</span> Simulador Biológico
               </h3>
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Área Expansión (m²)</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Superficie Total (m²)</label>
                   <input type="number" name="surface" value={simParams.surface} onChange={(e) => setSimParams({...simParams, surface: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[20px] px-6 py-4 text-sm font-black dark:text-white focus:ring-2 focus:ring-primary/20 outline-none" />
                 </div>
                 <button onClick={handleRecalculate} className="w-full py-5 bg-slate-900 dark:bg-primary text-white font-black rounded-[24px] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-                  <span className="material-symbols-outlined">refresh</span> PROYECTAR 2027
+                  <span className="material-symbols-outlined">refresh</span> RECALCULAR MODELO
                 </button>
               </div>
            </section>
