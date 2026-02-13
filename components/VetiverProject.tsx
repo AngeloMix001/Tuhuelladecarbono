@@ -330,12 +330,21 @@ const VetiverProject: React.FC = () => {
   const [simParams, setSimParams] = useState({ surface: '1500', density: '12', stage: 'Consolidado (Año 6+)' });
   const [simResult, setSimResult] = useState<{capture: number, credits: number} | null>(null);
 
+  // Validación reactiva
+  const validationErrors = useMemo(() => ({
+    surface: !simParams.surface || parseFloat(simParams.surface) <= 0,
+    density: !simParams.density || parseFloat(simParams.density) <= 0
+  }), [simParams.surface, simParams.density]);
+
+  const hasErrors = Object.values(validationErrors).some(error => error);
+
   useEffect(() => {
     const timer = setTimeout(() => setIsChartLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
   const handleRecalculate = () => {
+    if (hasErrors) return;
     setIsChartLoading(true);
     setTimeout(() => {
       setIsChartLoading(false);
@@ -424,18 +433,96 @@ const VetiverProject: React.FC = () => {
               </div>
            </section>
 
-           <section className="bg-white dark:bg-white/5 p-10 rounded-[48px] border border-primary/20 shadow-2xl relative overflow-hidden group">
-              <h3 className="text-xl font-black mb-8 flex items-center gap-4 dark:text-white uppercase tracking-tighter">
+           <section className="bg-white dark:bg-slate-900 p-10 rounded-[48px] border border-primary/20 shadow-2xl relative overflow-hidden group">
+              <h3 className="text-xl font-black mb-8 flex items-center gap-4 dark:text-white uppercase tracking-tighter leading-tight">
                 <span className="material-symbols-outlined text-primary text-2xl">science</span> Simulador Biológico
               </h3>
               <div className="space-y-6">
+                {/* Input Superficie */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Superficie Total (m²)</label>
-                  <input type="number" name="surface" value={simParams.surface} onChange={(e) => setSimParams({...simParams, surface: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[20px] px-6 py-4 text-sm font-black dark:text-white focus:ring-2 focus:ring-primary/20 outline-none" />
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Superficie Total</label>
+                    {validationErrors.surface && <span className="text-[9px] font-bold text-rose-500 uppercase">Valor Inválido</span>}
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      placeholder="Ej: 1500 m²"
+                      value={simParams.surface} 
+                      onChange={(e) => setSimParams({...simParams, surface: e.target.value})} 
+                      className={`
+                        w-full bg-slate-50 dark:bg-white/5 border rounded-[20px] px-6 py-4 text-sm font-black dark:text-white outline-none transition-all
+                        ${validationErrors.surface 
+                          ? 'border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.2)]' 
+                          : 'border-slate-200 dark:border-white/10 focus:ring-4 focus:ring-primary/10 focus:border-primary'}
+                      `} 
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">m²</span>
+                  </div>
                 </div>
-                <button onClick={handleRecalculate} className="w-full py-5 bg-slate-900 dark:bg-primary text-white font-black rounded-[24px] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-                  <span className="material-symbols-outlined">refresh</span> RECALCULAR MODELO
+
+                {/* Input Densidad */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Densidad de Siembra</label>
+                    {validationErrors.density && <span className="text-[9px] font-bold text-rose-500 uppercase">Valor Inválido</span>}
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      placeholder="Ej: 12 plantas/m²"
+                      value={simParams.density} 
+                      onChange={(e) => setSimParams({...simParams, density: e.target.value})} 
+                      className={`
+                        w-full bg-slate-50 dark:bg-white/5 border rounded-[20px] px-6 py-4 text-sm font-black dark:text-white outline-none transition-all
+                        ${validationErrors.density 
+                          ? 'border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.2)]' 
+                          : 'border-slate-200 dark:border-white/10 focus:ring-4 focus:ring-primary/10 focus:border-primary'}
+                      `} 
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">P/m²</span>
+                  </div>
+                </div>
+
+                {/* Selector de Etapa */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Etapa de Maduración</label>
+                  <select 
+                    value={simParams.stage} 
+                    onChange={(e) => setSimParams({...simParams, stage: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[20px] px-6 py-4 text-sm font-black dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none appearance-none cursor-pointer"
+                  >
+                    {Object.keys(GROWTH_FACTORS).map(stage => (
+                      <option key={stage} value={stage} className="dark:bg-slate-900">{stage}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button 
+                  onClick={handleRecalculate} 
+                  disabled={hasErrors || isChartLoading}
+                  className={`
+                    w-full py-5 text-white font-black rounded-[24px] shadow-xl transition-all flex items-center justify-center gap-3 uppercase tracking-[0.1em]
+                    ${hasErrors 
+                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed grayscale' 
+                      : 'bg-slate-900 dark:bg-primary hover:scale-[1.02] active:scale-[0.98] shadow-primary/20'}
+                  `}
+                >
+                  <span className={`material-symbols-outlined ${isChartLoading ? 'animate-spin' : ''}`}>
+                    {isChartLoading ? 'sync' : 'refresh'}
+                  </span> 
+                  {isChartLoading ? 'CALCULANDO...' : 'RECALCULAR MODELO'}
                 </button>
+
+                {simResult && !hasErrors && (
+                  <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/10 animate-in slide-in-from-top-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">Proyección de Captura Anual</p>
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-5xl font-black text-primary tracking-tighter">{simResult.capture.toLocaleString()}</span>
+                      <span className="text-xs font-black text-primary/60 uppercase tracking-widest">kgCO₂e</span>
+                    </div>
+                  </div>
+                )}
               </div>
            </section>
         </div>

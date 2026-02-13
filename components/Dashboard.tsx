@@ -2,7 +2,7 @@
 import React, { useState, useMemo, memo, lazy, Suspense } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line
+  PieChart, Pie, Cell, LineChart, Line, ReferenceLine
 } from 'recharts';
 import { COLORS } from '../constants';
 import AiInsights from './AiInsights';
@@ -42,6 +42,37 @@ const Sparkline = memo(({ data, color }: { data: number[], color: string }) => (
     </ResponsiveContainer>
   </div>
 ));
+
+const CustomBalanceTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-900/95 border border-white/20 p-5 rounded-[24px] shadow-3xl backdrop-blur-xl ring-1 ring-white/10 min-w-[200px] animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{label} 2026</p>
+          <span className="text-[9px] font-black bg-white/10 text-white px-2 py-0.5 rounded-full">AUDITADO</span>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Emisiones</span>
+            <span className="text-xs font-black text-white">{data.emissions} t</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Captura</span>
+            <span className="text-xs font-black text-primary">+{data.capture} t</span>
+          </div>
+          <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between">
+            <span className="text-[11px] font-black text-white uppercase tracking-widest">Balance Neto</span>
+            <span className={`text-sm font-black ${data.balance <= 0 ? 'text-primary' : 'text-rose-500'}`}>
+              {data.balance > 0 ? '+' : ''}{data.balance.toFixed(1)} tCO2e
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 const MiniKPICard = memo(({ title, value, unit, icon, trend, trendType, history, subtitle }: any) => {
   const isPos = trendType === 'pos';
@@ -211,10 +242,14 @@ const Dashboard: React.FC = () => {
               <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Trayectoria Negativa Sostenida</h3>
               <p className="text-xs text-slate-500 font-medium mt-1">Evolución del balance neto en el primer semestre de 2026</p>
             </div>
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-primary"></span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Balance Auditado</span>
+            </div>
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3}/>
@@ -222,10 +257,35 @@ const Dashboard: React.FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} unit=" t" />
-                <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.98)' }} itemStyle={{ fontSize: '12px', fontWeight: 'bold' }} />
-                <Area type="monotone" dataKey="balance" name="Balance Neto" stroke={COLORS.primary} strokeWidth={4} fillOpacity={1} fill="url(#colorBalance)" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} 
+                  dy={10} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                  unit=" t" 
+                />
+                <ReferenceLine 
+                  y={0} 
+                  stroke="rgba(17, 212, 33, 0.4)" 
+                  strokeDasharray="10 5" 
+                  label={{ position: 'right', value: 'TARGET ZERO 2027', fill: COLORS.primary, fontSize: 9, fontWeight: 900, letterSpacing: '2px' }} 
+                />
+                <Tooltip content={<CustomBalanceTooltip />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="balance" 
+                  name="Balance Neto" 
+                  stroke={COLORS.primary} 
+                  strokeWidth={4} 
+                  fillOpacity={1} 
+                  fill="url(#colorBalance)" 
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>

@@ -331,16 +331,33 @@ const TablaInformes: React.FC = () => {
 
 const StatusBadge = ({ estado }: { estado: EstadoRegistro }) => {
   const configs = {
-    EN_VALIDACION: { label: 'PENDIENTE', bg: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-500 border-orange-200/40' },
-    APROBADO: { label: 'VALIDADO', bg: 'bg-green-50 text-green-600 dark:bg-primary/10 dark:text-primary border-green-200/40' },
-    RECHAZADO: { label: 'RECHAZADO', bg: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-500 border-red-200/40' },
+    EN_VALIDACION: { 
+      label: 'PENDIENTE', 
+      bg: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-500 border-orange-200/40',
+      icon: 'schedule',
+      dotColor: 'bg-orange-500'
+    },
+    APROBADO: { 
+      label: 'VALIDADO', 
+      bg: 'bg-green-50 text-green-600 dark:bg-primary/10 dark:text-primary border-green-200/40',
+      icon: 'verified',
+      dotColor: 'bg-primary'
+    },
+    RECHAZADO: { 
+      label: 'RECHAZADO', 
+      bg: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-500 border-red-200/40',
+      icon: 'error',
+      dotColor: 'bg-red-500'
+    },
   };
 
-  const { label, bg } = configs[estado];
+  const { label, bg, icon, dotColor } = configs[estado];
   return (
-    <span className={`px-4 py-2 rounded-xl text-[9px] font-black border uppercase tracking-[0.2em] inline-block shadow-sm ${bg}`}>
+    <div className={`px-4 py-2 rounded-xl text-[9px] font-black border uppercase tracking-[0.2em] inline-flex items-center gap-2 shadow-sm ${bg}`}>
+      <div className={`size-1.5 rounded-full ${dotColor} ${estado === 'EN_VALIDACION' ? 'animate-pulse' : ''}`}></div>
+      <span className="material-symbols-outlined text-[14px] leading-none">{icon}</span>
       {label}
-    </span>
+    </div>
   );
 };
 
