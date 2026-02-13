@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ title, breadcrumb, isDarkMode, toggleDa
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, title: "Nuevo registro pendiente en San Antonio", time: "Hace 5 min", icon: "pending_actions", type: 'warning', read: false },
     { id: 2, title: "Validación exitosa: REC-A82F", time: "Hace 1 hora", icon: "verified", type: 'success', read: false },
-    { id: 3, title: "Meta de captura Junio alcanzada", time: "Hoy, 09:00", icon: "eco", type: 'success', read: false },
+    { id: 3, title: "Meta de captura Febrero alcanzada", time: "Hoy, 09:00", icon: "eco", type: 'success', read: false },
     { id: 4, title: "Actualización de factores de emisión", time: "Ayer", icon: "info", type: 'info', read: true },
   ]);
 

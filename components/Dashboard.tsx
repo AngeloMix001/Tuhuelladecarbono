@@ -105,7 +105,7 @@ const ExecutiveHeader = memo(({ kpis }: any) => {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-6">
             <span className="bg-primary/20 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-primary/30">
-              Resumen Ejecutivo Junio 2026
+              Resumen Ejecutivo Febrero 2026
             </span>
             <span className="size-2 rounded-full bg-primary animate-pulse"></span>
           </div>
