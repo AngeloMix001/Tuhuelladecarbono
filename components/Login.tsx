@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (remember: boolean) => void;
 }
 
 const LogoTC = () => (
@@ -14,8 +14,9 @@ const LogoTC = () => (
 );
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('agutierrez@puertocolumbo.com');
+  const [password, setPassword] = useState('Angel2026');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     // Validación restringida a las credenciales solicitadas
     setTimeout(() => {
       if (email === 'agutierrez@puertocolumbo.com' && password === 'Angel2026') {
-        onLogin();
+        onLogin(rememberMe);
       } else {
         setError('Credenciales no autorizadas. Por favor verifique su correo y contraseña.');
         setIsLoading(false);
@@ -91,7 +92,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <div className="flex items-center justify-between px-1">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" className="size-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20" />
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="size-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20 cursor-pointer" 
+                />
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-300 transition-colors">Recordarme</span>
               </label>
               <a href="#" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">¿Olvido su clave?</a>

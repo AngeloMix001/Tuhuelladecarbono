@@ -12,8 +12,11 @@ import Login from './components/Login';
 
 const App: React.FC = () => {
   const location = useLocation();
+  
+  // Inicialización: Verifica tanto localStorage (persistente) como sessionStorage (volátil)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
+    return localStorage.getItem('isLoggedIn') === 'true' || 
+           sessionStorage.getItem('isLoggedIn') === 'true';
   });
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -37,14 +40,23 @@ const App: React.FC = () => {
     setSidebarOpen(false);
   }, [location.pathname]);
 
-  const handleLogin = (status: boolean) => {
+  const handleLogin = (status: boolean, remember: boolean = false) => {
     setIsAuthenticated(status);
-    localStorage.setItem('isLoggedIn', status.toString());
+    if (status) {
+      if (remember) {
+        localStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.removeItem('isLoggedIn'); // Limpiar el otro por si acaso
+      } else {
+        sessionStorage.setItem('isLoggedIn', 'true');
+        localStorage.removeItem('isLoggedIn'); // Limpiar el otro por si acaso
+      }
+    }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('isLoggedIn');
   };
 
   const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), []);
@@ -52,7 +64,7 @@ const App: React.FC = () => {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   
   if (!isAuthenticated) {
-    return <Login onLogin={() => handleLogin(true)} />;
+    return <Login onLogin={(remember) => handleLogin(true, remember)} />;
   }
 
   const getPageTitle = () => {
