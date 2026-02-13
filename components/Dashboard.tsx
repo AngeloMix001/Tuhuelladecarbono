@@ -5,7 +5,6 @@ import {
   PieChart, Pie, Cell, LineChart, Line, ReferenceLine
 } from 'recharts';
 import { COLORS } from '../constants';
-import AiInsights from './AiInsights';
 
 // Code splitting for secondary dashboard components
 const SavedRecordsWidget = lazy(() => import('./SavedRecordsWidget'));
@@ -297,38 +296,43 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <AiInsights data={chartData} kpis={kpis} />
-        </div>
-        <div className="bg-white dark:bg-white/5 rounded-[32px] p-8 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
-            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase self-start">Mix Operativo 2026</h3>
-            <div className="flex-1 relative w-full h-[260px] min-h-[260px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
-                <PieChart>
-                  <Pie data={pieData} innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value" stroke="none">
-                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-black text-slate-900 dark:text-white">Neto</span>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fuentes</span>
-              </div>
+      <div className="bg-white dark:bg-white/5 rounded-[32px] p-8 md:p-10 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-center gap-12">
+        <div className="flex-1">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined text-3xl">pie_chart</span>
             </div>
-            <div className="mt-8 w-full space-y-3">
-              {pieData.map((item, i) => (
-                <div key={i} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="size-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                    <span className="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">{item.name}</span>
-                  </div>
-                  <span className="font-black dark:text-white">{item.value}%</span>
-                </div>
-              ))}
-            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-tight">Mix Operativo 2026</h3>
           </div>
+          <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
+            Distribución porcentual de las fuentes de emisión auditadas en el periodo actual. La electricidad sigue siendo el factor predominante debido a la automatización de grúas pórtico.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {pieData.map((item, i) => (
+              <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:border-primary/30 transition-all">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="size-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.name}</span>
+                </div>
+                <p className="text-2xl font-black text-slate-900 dark:text-white">{item.value}%</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="relative w-full max-w-[320px] h-[320px] shrink-0 flex items-center justify-center">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={320}>
+            <PieChart>
+              <Pie data={pieData} innerRadius={90} outerRadius={125} paddingAngle={8} dataKey="value" stroke="none">
+                {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-4xl font-black text-slate-900 dark:text-white">100%</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Auditado</span>
+          </div>
+        </div>
       </div>
     </div>
   );

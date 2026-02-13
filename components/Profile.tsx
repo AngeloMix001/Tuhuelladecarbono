@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
                   <h3 className="text-2xl font-bold text-forest dark:text-white">Angel Gutierrez</h3>
                   <div className="flex items-center gap-2 mt-1 text-primary font-medium">
                     <span className="material-symbols-outlined text-sm">verified_user</span>
-                    <span className="text-sm">Gestor Ambiental</span>
+                    <span className="text-sm">Gestor de Innovación</span>
                   </div>
                 </div>
                 <button className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary/90 transition-all flex items-center gap-2">
@@ -38,8 +38,8 @@ const Profile: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                 <InfoItem label="Correo Corporativo" value="agutierrez@puertocolumbo.com" />
                 <InfoItem label="Empresa" value="Puerto Columbo S.A." />
-                <InfoItem label="Ubicación" value="Terminal Central, Puerto Columbo" />
-                <InfoItem label="Miembro desde" value="Enero 2022" />
+                <InfoItem label="Ubicación" value="Terminal Valparaíso, Puerto Columbo" />
+                <InfoItem label="Miembro desde" value="Febrero 2026" />
               </div>
             </div>
           </section>

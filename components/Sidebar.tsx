@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
               <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-700 bg-cover bg-center shadow-sm" style={{ backgroundImage: "url('https://picsum.photos/seed/angel/100')" }}></div>
               <div className="overflow-hidden">
                 <p className="text-xs font-black text-slate-800 dark:text-white truncate">Angel Gutierrez</p>
-                <p className="text-[10px] text-slate-500 font-bold truncate">Gestor Ambiental</p>
+                <p className="text-[10px] text-slate-500 font-bold truncate">Gestor de Innovación</p>
               </div>
               <span className="material-symbols-outlined text-sm text-slate-400 ml-auto group-hover:text-primary transition-colors">settings</span>
             </div>
