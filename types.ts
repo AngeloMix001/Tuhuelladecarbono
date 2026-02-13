@@ -1,4 +1,24 @@
 
+export type EstadoRegistro = 'EN_VALIDACION' | 'APROBADO' | 'RECHAZADO';
+
+export interface DatosOperativos {
+  trucks: number;
+  containers: number;
+  electricity: number;
+  diesel: number;
+}
+
+export interface RegistroCO2 {
+  id: string;
+  fecha: string;
+  timestamp: string;
+  emisiones: number; // en toneladas tCO2e
+  datos: DatosOperativos;
+  estado: EstadoRegistro;
+  observaciones?: string;
+  origen: string;
+}
+
 export interface KPIData {
   label: string;
   value: string;
@@ -7,21 +27,4 @@ export interface KPIData {
   trendType?: 'positive' | 'negative' | 'neutral';
   icon: string;
   subtitle: string;
-}
-
-export interface ActivityLog {
-  id: string;
-  type: 'login' | 'report' | 'update' | 'security';
-  title: string;
-  timestamp: string;
-  icon: string;
-}
-
-export interface ReportRecord {
-  id: string;
-  date: string;
-  origin: string;
-  emissions: number;
-  capture: number;
-  status: 'VALIDADO' | 'EN REVISIÓN';
 }

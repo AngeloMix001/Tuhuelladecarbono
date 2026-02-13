@@ -24,10 +24,18 @@ const SOURCE_DISTRIBUTION = [
 ];
 
 const Sparkline = memo(({ data, color }: { data: number[], color: string }) => (
-  <div className="h-10 w-24">
+  <div className="h-12 w-28 transition-all duration-500 group-hover:scale-110 group-hover:filter group-hover:drop-shadow-[0_0_8px_rgba(17,212,33,0.3)]">
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data.map((v, i) => ({ v, i }))}>
-        <Line type="monotone" dataKey="v" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        <Line 
+          type="monotone" 
+          dataKey="v" 
+          stroke={color} 
+          strokeWidth={2.5} 
+          dot={false} 
+          isAnimationActive={true}
+          animationDuration={1500}
+        />
       </LineChart>
     </ResponsiveContainer>
   </div>
@@ -36,27 +44,41 @@ const Sparkline = memo(({ data, color }: { data: number[], color: string }) => (
 const MiniKPICard = memo(({ title, value, unit, icon, trend, trendType, history, subtitle }: any) => {
   const isPos = trendType === 'pos';
   const color = isPos ? COLORS.primary : COLORS.red500;
+  const bgColor = isPos ? 'bg-primary/10' : 'bg-red-500/10';
+  const trendIcon = isPos ? (trend.includes('-') ? 'trending_down' : 'trending_up') : 'trending_flat';
 
   return (
-    <div className="bg-white dark:bg-white/5 p-6 rounded-[24px] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`size-12 rounded-xl flex items-center justify-center text-white shadow-lg ${isPos ? 'bg-primary' : 'bg-slate-800'}`}>
-          <span className="material-symbols-outlined">{icon}</span>
+    <div className="bg-white dark:bg-white/5 p-6 rounded-[32px] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 group relative overflow-hidden">
+      {/* Decorative background pulse on hover */}
+      <div className={`absolute -right-4 -top-4 size-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${isPos ? 'bg-primary' : 'bg-red-500'}`}></div>
+      
+      <div className="flex justify-between items-start mb-6">
+        <div className={`size-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform duration-300 group-hover:-translate-y-1 ${isPos ? 'bg-primary shadow-primary/20' : 'bg-slate-800 shadow-slate-900/20'}`}>
+          <span className="material-symbols-outlined text-2xl">{icon}</span>
         </div>
         <Sparkline data={history || [1, 5, 2, 8]} color={color} />
       </div>
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
-          <span className={`text-[10px] font-bold ${isPos ? 'text-primary' : 'text-red-500'}`}>
-            {trend}
-          </span>
+      
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</p>
+          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${bgColor} transition-transform duration-300 group-hover:scale-105`}>
+            <span className={`material-symbols-outlined text-[14px] ${isPos ? 'text-primary' : 'text-red-500'}`}>{trendIcon}</span>
+            <span className={`text-[10px] font-black tracking-tighter ${isPos ? 'text-primary' : 'text-red-500'}`}>
+              {trend}
+            </span>
+          </div>
         </div>
-        <div className="flex items-baseline gap-1">
-          <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</h4>
+        
+        <div className="flex items-baseline gap-1.5">
+          <h4 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:text-primary transition-colors duration-300">{value}</h4>
           <span className="text-sm font-bold text-slate-400">{unit}</span>
         </div>
-        <p className="text-[10px] text-slate-500 mt-2 font-medium italic">{subtitle}</p>
+        
+        <p className="text-[10px] text-slate-500 mt-3 font-semibold flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+          <span className="size-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+          {subtitle}
+        </p>
       </div>
     </div>
   );
