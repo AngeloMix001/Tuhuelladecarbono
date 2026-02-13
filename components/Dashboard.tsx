@@ -26,8 +26,8 @@ const SOURCE_DISTRIBUTION = [
 ];
 
 const Sparkline = memo(({ data, color }: { data: number[], color: string }) => (
-  <div className="h-10 w-full opacity-40 group-hover:opacity-100 transition-all duration-700 ease-out translate-y-2 group-hover:translate-y-0 min-w-[100px]">
-    <ResponsiveContainer width="100%" height="100%" minHeight={40}>
+  <div className="h-10 w-full min-h-[40px] opacity-40 group-hover:opacity-100 transition-all duration-700 ease-out translate-y-2 group-hover:translate-y-0 min-w-[100px]">
+    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={40}>
       <LineChart data={data.map((v, i) => ({ v, i }))}>
         <Line 
           type="monotone" 
@@ -248,7 +248,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="h-80 w-full min-h-[320px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={320}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={320}>
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
@@ -290,7 +290,7 @@ const Dashboard: React.FC = () => {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="lg:col-span-4 h-full">
+        <div className="lg:col-span-4 h-full min-h-[400px]">
           <Suspense fallback={<div className="h-full min-h-[400px] bg-slate-100 dark:bg-white/5 rounded-[32px] animate-pulse"></div>}>
             <SavedRecordsWidget />
           </Suspense>
@@ -304,7 +304,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white dark:bg-white/5 rounded-[32px] p-8 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
             <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase self-start">Mix Operativo 2026</h3>
             <div className="flex-1 relative w-full h-[260px] min-h-[260px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%" minHeight={260}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
                 <PieChart>
                   <Pie data={pieData} innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value" stroke="none">
                     {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}

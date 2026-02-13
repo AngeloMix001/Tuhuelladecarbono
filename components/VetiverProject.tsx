@@ -396,7 +396,7 @@ const VetiverProject: React.FC = () => {
             </div>
 
             <div className="h-[400px] w-full relative z-10 min-h-[400px]">
-              <ResponsiveContainer width="100%" height="100%" minHeight={400}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={400}>
                 <ComposedChart data={HISTORICAL_EMISSIONS} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="12 12" vertical={false} stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 900, fill: '#64748b', letterSpacing: '2px' }} dy={20} />
