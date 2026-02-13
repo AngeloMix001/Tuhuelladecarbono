@@ -1,10 +1,13 @@
 
 import React, { useState, useRef, useEffect, useCallback, memo, useMemo } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
+import { useRegistros } from '../hooks/useRegistros';
+import { exportRegistrosToExcel } from '../utils/export';
 
 interface Message {
-  role: 'user' | 'model';
+  role: 'user' | 'model' | 'system_action';
   text: string;
+  isAudio?: boolean;
 }
 
 interface AiInsightsProps {
@@ -12,10 +15,57 @@ interface AiInsightsProps {
   kpis: any;
 }
 
-// --- SUB-COMPONENTES MEMOIZADOS ---
+// --- DEFINICIÓN DE HERRAMIENTAS PARA EL AGENTE ---
+
+const agentTools: FunctionDeclaration[] = [
+  {
+    name: "get_environmental_records",
+    description: "Obtiene la lista completa de registros ambientales históricos para análisis de tendencias, auditoría o consulta de datos específicos.",
+    parameters: { type: Type.OBJECT, properties: {} }
+  },
+  {
+    name: "register_emissions",
+    description: "Registra una nueva operación de emisiones en el sistema de Puerto Columbo.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        origen: { type: Type.STRING, description: "Nombre del terminal (Ej: 'Puerto Columbo Valparaíso' o 'Puerto Columbo San Antonio')" },
+        fecha: { type: Type.STRING, description: "Fecha en formato YYYY-MM-DD" },
+        trucks: { type: Type.NUMBER, description: "Número de camiones procesados" },
+        containers: { type: Type.NUMBER, description: "Número de contenedores (TEUs)" },
+        electricity: { type: Type.NUMBER, description: "Consumo de electricidad en kWh" },
+        diesel: { type: Type.NUMBER, description: "Consumo de diesel en Litros" },
+      },
+      required: ["origen", "fecha", "electricity", "diesel"]
+    }
+  },
+  {
+    name: "trigger_excel_export",
+    description: "Genera y descarga automáticamente un reporte en formato Excel con los datos actuales filtrados o completos.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        filter_terminal: { type: Type.STRING, description: "Opcional: Filtrar por terminal específico antes de exportar." }
+      }
+    }
+  }
+];
 
 const MessageBubble = memo(({ msg }: { msg: Message }) => {
   const isUser = msg.role === 'user';
+  const isAction = msg.role === 'system_action';
+
+  if (isAction) {
+    return (
+      <div className="flex justify-center my-4 animate-in fade-in zoom-in duration-500">
+        <div className="bg-primary/5 border border-primary/20 rounded-full px-4 py-1.5 flex items-center gap-2">
+          <span className="size-2 bg-primary rounded-full animate-pulse"></span>
+          <span className="text-[9px] font-black text-primary uppercase tracking-widest">{msg.text}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-3 duration-500`}>
       <div className={`max-w-[88%] rounded-[28px] p-5 shadow-sm border backdrop-blur-md ${
@@ -25,10 +75,10 @@ const MessageBubble = memo(({ msg }: { msg: Message }) => {
       }`}>
         <div className="flex items-center gap-2 mb-2 opacity-50">
           <span className="material-symbols-outlined text-[14px]">
-            {isUser ? 'person' : 'smart_toy'}
+            {isUser ? (msg.isAudio ? 'mic' : 'person') : 'smart_toy'}
           </span>
           <span className="text-[9px] font-black uppercase tracking-[0.2em]">
-            {isUser ? 'Analista Senior' : 'AI Strategic Advisor'}
+            {isUser ? (msg.isAudio ? 'Voz de Gestor' : 'Gestor Ambiental') : 'AI Autonomous Agent'}
           </span>
         </div>
         <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
@@ -36,56 +86,111 @@ const MessageBubble = memo(({ msg }: { msg: Message }) => {
           <span className="text-[8px] opacity-40 font-bold uppercase tracking-widest">
             {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
           </span>
-          {!isUser && (
-            <button 
-              onClick={() => navigator.clipboard.writeText(msg.text)}
-              className="text-[9px] font-black text-primary hover:underline uppercase tracking-widest flex items-center gap-1"
-            >
-              <span className="material-symbols-outlined text-[12px]">content_copy</span>
-              Copiar
-            </button>
-          )}
         </div>
       </div>
     </div>
   );
 });
 
-const QuickAction = memo(({ action, onClick }: { action: any, onClick: (label: string) => void }) => (
-  <button 
-    onClick={() => onClick(action.label)}
-    className="group text-[10px] font-black text-slate-600 dark:text-slate-400 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-5 py-2.5 rounded-2xl hover:border-primary hover:bg-primary/5 hover:text-primary transition-all flex items-center gap-3 shadow-sm active:scale-95"
-  >
-    <div className="size-6 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-      <span className="material-symbols-outlined text-[16px]">{action.icon}</span>
-    </div>
-    {action.label.toUpperCase()}
-  </button>
-));
-
 const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
+  const { registros, insertRegistro } = useRegistros();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'Bienvenido, Angel. He analizado el cierre de Febrero 2026. Los sumideros biológicos del Proyecto Vetiver están operando al 94% de eficiencia. \n\n¿Deseas una proyección del balance neto para el próximo trimestre o prefieres revisar las estrategias de descarbonización de la flota?' }
+    { role: 'model', text: 'Agente Estratégico Online. Estoy conectado a la base de datos de Puerto Columbo y tengo permisos para registrar datos, analizar tendencias y generar reportes Excel.\n\n¿En qué misión puedo asistirte hoy? Puedes escribirme o usar el micrófono.' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
-  // Auto-scroll optimizado
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
+    if (isOpen) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading, isOpen]);
 
-  const sendMessage = useCallback(async (userText: string) => {
-    if (!userText.trim() || loading) return;
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-    const userMsg: Message = { role: 'user', text: userText };
-    setMessages(prev => [...prev, userMsg]);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = (reader.result as string).split(',')[1];
+          sendMessage("", base64Audio);
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error al acceder al micrófono:", err);
+      alert("No se pudo acceder al micrófono. Por favor verifica los permisos.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const executeAction = async (call: any) => {
+    const { name, args } = call;
+    
+    switch (name) {
+      case 'get_environmental_records':
+        setMessages(prev => [...prev, { role: 'system_action', text: 'Consultando historial de emisiones...' }]);
+        return { result: "success", data: registros };
+
+      case 'register_emissions':
+        setMessages(prev => [...prev, { role: 'system_action', text: `Registrando operación en ${args.origen}...` }]);
+        const EMISSION_FACTORS = { ELECTRICITY: 0.16, DIESEL: 2.68 };
+        const emissions = ((args.electricity * EMISSION_FACTORS.ELECTRICITY) + (args.diesel * EMISSION_FACTORS.DIESEL)) / 1000;
+        await insertRegistro({
+          fecha: args.fecha,
+          origen: args.origen,
+          emisiones: emissions,
+          captura: 0,
+          datos: {
+            trucks: args.trucks || 0,
+            containers: args.containers || 0,
+            electricity: args.electricity,
+            diesel: args.diesel
+          }
+        });
+        return { result: "success", message: "Registro guardado correctamente", id: `REC-${Math.random().toString(36).substr(2,4).toUpperCase()}` };
+
+      case 'trigger_excel_export':
+        setMessages(prev => [...prev, { role: 'system_action', text: 'Compilando datos y generando Excel...' }]);
+        const toExport = args.filter_terminal 
+          ? registros.filter(r => r.origen.includes(args.filter_terminal))
+          : registros;
+        exportRegistrosToExcel(toExport);
+        return { result: "success", message: "Archivo Excel generado y descargado." };
+
+      default:
+        return { error: "Herramienta no encontrada" };
+    }
+  };
+
+  const sendMessage = useCallback(async (userText: string, audioData?: string) => {
+    if ((!userText.trim() && !audioData) || loading) return;
+
+    const displayMessage = audioData ? "[Mensaje de Voz]" : userText;
+    setMessages(prev => [...prev, { role: 'user', text: displayMessage, isAudio: !!audioData }]);
     setInput('');
     setLoading(true);
 
@@ -93,125 +198,125 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       
       const systemInstruction = `
-        Identidad: Eres el "Director Estratégico de Sostenibilidad IA" de Puerto Columbo S.A.
-        Contexto Temporal: Febrero de 2026.
-        Misión: Ayudar a los gestores ambientales a interpretar el éxito del balance Carbono Negativo y planificar la Autonomía Energética 2027.
+        Eres un AGENTE AUTÓNOMO DE IA para Puerto Columbo S.A.
+        Tu objetivo es ejecutar tareas operativas de principio a fin.
         
-        Datos de Soporte (Métricas Reales):
-        - Balance Neto Actual: ${kpis.netBalance} tCO2e (Carbono Negativo logrado).
-        - Emisiones Brutas: ${kpis.totalEmissions} tCO2e.
-        - Eficiencia Operativa: ${kpis.efficiency} kg/v.
-        - Tendencia de Reducción: ${kpis.reductionTrend}.
-        - Historial Operativo: ${JSON.stringify(data)}.
-
-        Directrices de Respuesta:
-        1. Tono: Ejecutivo, basado en datos, visionario y altamente profesional.
-        2. Conocimiento: Experto en sistemas Vetiver (bio-captura), hidrógeno verde y logística portuaria.
-        3. Formato: Usa listas si es necesario, pero mantén las respuestas por debajo de 150 palabras a menos que se pida un informe detallado.
-        4. Idioma: Español profesional de Chile/Latinoamérica.
+        REGLAS DE OPERACIÓN:
+        1. Si el usuario te pide registrar algo (por texto o voz), usa 'register_emissions'.
+        2. Si el usuario te pide un informe o exportar, usa 'trigger_excel_export'.
+        3. Si el usuario te hace preguntas analíticas, primero usa 'get_environmental_records'.
+        4. Eres capaz de entender audio directamente. Si recibes audio, procésalo como una instrucción directa.
         
-        Recuerda: El usuario es Angel Gutierrez, Gestor Ambiental Senior. Trátalo con respeto pero como un colega de alto nivel.
+        CONTEXTO ACTUAL:
+        - Fecha: Febrero 2026.
+        - Empresa: Puerto Columbo S.A.
+        - KPIs Clave: ${JSON.stringify(kpis)}.
       `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: userText,
+      // Definir las partes del contenido
+      const contentsParts: any[] = [];
+      if (userText) contentsParts.push({ text: userText });
+      if (audioData) {
+        contentsParts.push({
+          inlineData: {
+            mimeType: 'audio/webm',
+            data: audioData
+          }
+        });
+      }
+
+      // Primera llamada: El modelo decide si usa herramientas
+      let response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+        contents: { parts: contentsParts },
         config: {
-          systemInstruction: systemInstruction,
-          temperature: 0.7,
-          topP: 0.95,
+          systemInstruction,
+          tools: [{ functionDeclarations: agentTools }]
         }
       });
 
-      const aiText = response.text || "He detectado una interrupción en el enlace de datos. Por favor, reformula tu consulta técnica.";
-      setMessages(prev => [...prev, { role: 'model', text: aiText }]);
+      // Manejo de Bucle de Acciones (Agentic Loop)
+      if (response.functionCalls) {
+        const functionResponses = [];
+        for (const call of response.functionCalls) {
+          const result = await executeAction(call);
+          functionResponses.push({
+            id: call.id,
+            name: call.name,
+            response: result
+          });
+        }
+
+        // Segunda llamada con resultados de herramientas
+        const finalResponse = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+          contents: {
+            parts: [
+              ...contentsParts,
+              ...functionResponses.map(fr => ({
+                text: `Resultado de la herramienta ${fr.name}: ${JSON.stringify(fr.response)}`
+              }))
+            ]
+          },
+          config: { systemInstruction }
+        });
+
+        setMessages(prev => [...prev, { role: 'model', text: finalResponse.text || "Operación procesada con éxito." }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'model', text: response.text || "He recibido tu instrucción. ¿Hay algo más que deba ejecutar?" }]);
+      }
+
     } catch (error) {
-      console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Sistema de análisis temporalmente fuera de línea. Reintentando sincronización..." }]);
+      console.error("Agent Error:", error);
+      setMessages(prev => [...prev, { role: 'model', text: "Error en el procesamiento. Asegúrate de que el micrófono esté bien configurado." }]);
     } finally {
       setLoading(false);
     }
-  }, [kpis, data, loading]);
-
-  const quickActions = useMemo(() => [
-    { label: "Análisis Balance Negativo", icon: "monitoring" },
-    { label: "Ruta Hacia Autonomía 2027", icon: "rocket_launch" },
-    { label: "Impacto Vetiver Fase III", icon: "eco" },
-    { label: "Optimización de Flota", icon: "local_shipping" }
-  ], []);
-
-  const handleToggleChat = useCallback(() => setIsOpen(prev => !prev), []);
+  }, [registros, insertRegistro, kpis, loading]);
 
   return (
     <>
       <button 
-        onClick={handleToggleChat}
-        className="fixed bottom-8 right-8 bg-slate-900 dark:bg-primary text-white p-5 rounded-[24px] shadow-2xl hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center group border-4 border-white dark:border-slate-800 ring-4 ring-primary/20"
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-8 right-8 bg-slate-900 dark:bg-primary text-white p-5 rounded-[24px] shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center group border-4 border-white dark:border-slate-800 ring-4 ring-primary/20"
       >
-        <div className="relative">
-          <span className="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform">insights</span>
-          <span className="absolute -top-1 -right-1 size-3.5 bg-primary rounded-full border-2 border-white dark:border-slate-800 animate-ping"></span>
-        </div>
+        <span className="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform">precision_manufacturing</span>
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 group-hover:ml-4 whitespace-nowrap font-black text-xs uppercase tracking-[0.2em]">
-          Estratega IA Online
+          Agente Autónomo
         </span>
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
-          <div 
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-500" 
-            onClick={handleToggleChat} 
-          />
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm animate-in fade-in" onClick={() => setIsOpen(false)} />
           
-          <div className="relative w-full max-w-xl bg-slate-50 dark:bg-slate-900 h-full shadow-[-40px_0_80px_rgba(0,0,0,0.3)] flex flex-col animate-in slide-in-from-right duration-500 border-l border-white/10">
+          <div className="relative w-full max-w-xl bg-slate-50 dark:bg-slate-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 border-l border-white/10">
             
-            {/* Header del Chat */}
-            <div className="p-8 bg-white dark:bg-slate-800/50 border-b border-slate-200 dark:border-white/5 flex items-center justify-between backdrop-blur-xl">
-              <div className="flex items-center gap-5">
-                <div className="relative">
-                  <div className="size-14 rounded-[22px] bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center shadow-lg shadow-primary/20">
-                    <span className="material-symbols-outlined text-white text-3xl">smart_toy</span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 size-4 bg-primary border-2 border-white dark:border-slate-800 rounded-full"></div>
+            <div className="p-8 bg-white dark:bg-slate-800/50 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="size-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg">
+                  <span className="material-symbols-outlined text-2xl animate-pulse">robot_2</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Strategic Advisor</h3>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Columbo System Agent</h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sincronizado</span>
-                    <span className="text-[10px] text-slate-400 font-bold">•</span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">v4.0.2 Stable</span>
+                    <span className="size-2 bg-primary rounded-full"></span>
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Escucha Activa</span>
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={handleToggleChat}
-                className="size-12 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center"
-              >
-                <span className="material-symbols-outlined text-2xl">close_fullscreen</span>
-              </button>
+              <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white"><span className="material-symbols-outlined">close</span></button>
             </div>
 
-            {/* Area de Mensajes */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth scrollbar-hide bg-[radial-gradient(circle_at_top_right,rgba(17,212,33,0.05),transparent)]">
-              {messages.map((msg, idx) => (
-                <MessageBubble key={idx} msg={msg} />
-              ))}
-              
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
+              {messages.map((msg, idx) => <MessageBubble key={idx} msg={msg} />)}
               {loading && (
-                <div className="flex justify-start w-[90%] animate-in fade-in duration-300">
-                  <div className="w-full bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5 rounded-[32px] rounded-bl-none p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                       <div className="flex gap-1">
-                          <div className="size-1.5 bg-primary rounded-full animate-bounce"></div>
-                          <div className="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                          <div className="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                       </div>
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Procesando Vectores de Sostenibilidad...</span>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="h-2 bg-slate-200/50 dark:bg-slate-700/30 rounded-full w-full"></div>
-                      <div className="h-2 bg-slate-200/50 dark:bg-slate-700/30 rounded-full w-4/5"></div>
+                <div className="flex justify-start animate-pulse">
+                  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                    <div className="flex gap-1.5">
+                      <div className="size-2 bg-primary rounded-full animate-bounce"></div>
+                      <div className="size-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                      <div className="size-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
                     </div>
                   </div>
                 </div>
@@ -219,45 +324,48 @@ const AiInsights: React.FC<AiInsightsProps> = ({ data, kpis }) => {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Acciones Rápidas */}
-            {!loading && (
-              <div className="px-8 py-4 flex flex-wrap gap-3 bg-transparent">
-                {quickActions.map((action, i) => (
-                  <QuickAction key={i} action={action} onClick={sendMessage} />
-                ))}
-              </div>
-            )}
+            <div className="p-8 bg-white dark:bg-slate-800/80 border-t border-slate-200 dark:border-white/5">
+              <div className="flex items-center gap-3">
+                <button 
+                  onMouseDown={startRecording}
+                  onMouseUp={stopRecording}
+                  onMouseLeave={stopRecording}
+                  onTouchStart={startRecording}
+                  onTouchEnd={stopRecording}
+                  className={`size-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
+                    isRecording 
+                      ? 'bg-red-500 text-white animate-pulse scale-110 shadow-red-500/40' 
+                      : 'bg-slate-100 dark:bg-slate-900 text-slate-500 hover:text-primary hover:bg-primary/10'
+                  }`}
+                  title="Mantén presionado para hablar"
+                >
+                  <span className="material-symbols-outlined text-2xl">
+                    {isRecording ? 'graphic_eq' : 'mic'}
+                  </span>
+                </button>
 
-            {/* Input de Usuario */}
-            <div className="p-8 bg-white dark:bg-slate-800/80 border-t border-slate-200 dark:border-white/5 backdrop-blur-2xl">
-              <div className="relative flex items-center gap-4">
-                <div className="flex-1 relative group">
-                  <input 
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage(input)}
-                    placeholder="Escribe tu consulta estratégica..."
-                    className="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-2xl px-6 py-5 text-sm font-medium focus:ring-2 focus:ring-primary/40 outline-none transition-all dark:text-white placeholder:text-slate-400"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enter para enviar</span>
-                  </div>
-                </div>
+                <input 
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage(input)}
+                  placeholder={isRecording ? "Escuchando..." : "Instrucción de tarea..."}
+                  className={`flex-1 bg-slate-100 dark:bg-slate-900 border-none rounded-2xl px-6 py-4 text-sm font-medium dark:text-white outline-none focus:ring-2 focus:ring-primary/40 transition-all ${isRecording ? 'opacity-50' : ''}`}
+                  disabled={isRecording}
+                />
+                
                 <button 
                   onClick={() => sendMessage(input)}
-                  disabled={!input.trim() || loading}
-                  className="size-16 bg-primary text-white rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:grayscale ring-4 ring-primary/10"
+                  disabled={!input.trim() || loading || isRecording}
+                  className="size-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-xl disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
                 >
-                  <span className="material-symbols-outlined text-3xl">send</span>
+                  <span className="material-symbols-outlined text-2xl">rocket</span>
                 </button>
               </div>
-              <div className="mt-4 flex items-center justify-center gap-4">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px]">verified</span>
-                  Análisis basado en datos certificados ISO 14064
-                </p>
-              </div>
+              <p className="mt-4 text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-[14px]">record_voice_over</span>
+                Mantén presionado el micrófono para dar órdenes por voz.
+              </p>
             </div>
           </div>
         </div>
