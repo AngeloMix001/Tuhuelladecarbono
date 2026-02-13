@@ -101,7 +101,7 @@ const MessageBubble = memo(({ msg }: { msg: Message }) => {
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">
-            {isUser ? 'Terminal Gestor' : 'Columbo Core AI'}
+            {isUser ? 'Terminal Gestor' : 'Columbito AI'}
           </span>
         </div>
         <p className="text-[14px] leading-relaxed font-medium whitespace-pre-wrap">{msg.text}</p>
@@ -119,7 +119,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem(STORAGE_CHAT_KEY);
     return saved ? JSON.parse(saved) : [
-      { role: 'model', text: 'Sistemas operativos. Bienvenido al núcleo de gestión de Puerto Columbo.\n\nEstoy listo para ejecutar directivas de emisiones o procesar reportes mediante visión y voz.' }
+      { role: 'model', text: 'Sistemas operativos. ¡Hola! Soy Columbito, tu asistente inteligente de Puerto Columbo.\n\nEstoy listo para ejecutar directivas de emisiones o procesar reportes mediante visión y voz.' }
     ];
   });
   const [input, setInput] = useState('');
@@ -171,10 +171,10 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
     const { name, args } = call;
     switch (name) {
       case 'get_environmental_records':
-        setMessages(prev => [...prev, { role: 'system_action', text: 'Consultando base de datos ambiental...' }]);
+        setMessages(prev => [...prev, { role: 'system_action', text: 'Columbito consultando base de datos...' }]);
         return { result: "success", count: registros.length, latest: registros[0] };
       case 'register_emissions':
-        setMessages(prev => [...prev, { role: 'system_action', text: `Inyectando datos en terminal ${args.origen}...` }]);
+        setMessages(prev => [...prev, { role: 'system_action', text: `Columbito inyectando datos en terminal ${args.origen}...` }]);
         await insertRegistro({
           fecha: args.fecha,
           origen: args.origen,
@@ -182,9 +182,9 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
           captura: 0,
           datos: args
         });
-        return { result: "success", status: "Transacción confirmada en blockchain" };
+        return { result: "success", status: "Transacción confirmada en blockchain por Columbito" };
       case 'trigger_excel_export':
-        setMessages(prev => [...prev, { role: 'system_action', text: 'Compilando reporte de auditoría...' }]);
+        setMessages(prev => [...prev, { role: 'system_action', text: 'Columbito compilando reporte de auditoría...' }]);
         exportRegistrosToExcel(registros);
         return { result: "success" };
       default:
@@ -202,9 +202,9 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-      const systemInstruction = `Eres el CORE AI de Puerto Columbo. Tu lenguaje es técnico y eficiente. 
+      const systemInstruction = `Eres Columbito, el asistente inteligente oficial de Puerto Columbo. Tu lenguaje es técnico, eficiente y servicial. 
       KPIs ACTUALES: Emisiones ${kpis.totalEmissions}t, Balance ${kpis.netBalance}t.
-      Si el usuario pide reportes o datos, usa herramientas obligatoriamente.`;
+      Si el usuario pide reportes o datos, usa herramientas obligatoriamente. Identifícate siempre como Columbito si te preguntan quién eres.`;
       
       const contentsParts: any[] = [];
       if (userText) contentsParts.push({ text: userText });
@@ -230,11 +230,10 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
               contents: { parts: [...contentsParts, { text: `Resultado de la herramienta ${call.name}: ${JSON.stringify(res)}` }] },
               config: { systemInstruction }
             });
-            setMessages(prev => [...prev, { role: 'model', text: finalRes.text || "Operación finalizada." }]);
+            setMessages(prev => [...prev, { role: 'model', text: finalRes.text || "Operación finalizada. ¿En qué más puedo ayudarte?" }]);
           }
         } else if (c.text) {
           fullText += c.text;
-          // Actualización en tiempo real del último mensaje de la IA si ya existe
           setMessages(prev => {
             const last = prev[prev.length - 1];
             if (last && last.role === 'model' && !hasToolCall) {
@@ -249,15 +248,15 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
         }
       }
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'model', text: "Error en el núcleo de procesamiento. Reintente." }]);
+      setMessages(prev => [...prev, { role: 'model', text: "Lo siento, Columbito ha tenido un error de conexión. Reintente." }]);
     } finally {
       setLoading(false);
     }
   }, [registros, kpis, loading]);
 
   const clearChat = () => {
-    if (window.confirm("¿Desea purgar el historial del núcleo central?")) {
-      setMessages([{ role: 'model', text: 'Sistemas purgados. Esperando nuevas directivas.' }]);
+    if (window.confirm("¿Deseas que Columbito olvide el historial actual?")) {
+      setMessages([{ role: 'model', text: 'Memoria purgada. ¡Hola de nuevo! Soy Columbito, listo para operar.' }]);
       localStorage.removeItem(STORAGE_CHAT_KEY);
     }
   };
@@ -269,7 +268,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
         className="fixed bottom-12 right-12 z-[60] size-20 bg-slate-900 dark:bg-primary rounded-[28px] shadow-[0_20px_40px_rgba(17,212,33,0.3)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
       >
         <div className="absolute inset-0 bg-primary/20 rounded-[28px] animate-ping opacity-40"></div>
-        <span className="material-symbols-outlined text-white text-4xl">neurology</span>
+        <span className="material-symbols-outlined text-white text-4xl">smart_toy</span>
       </button>
 
       {isOpen && (
@@ -283,13 +282,13 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
               <div className="flex items-center gap-5">
                 <div className="relative">
                   <div className="size-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                    <span className="material-symbols-outlined text-3xl">hub</span>
+                    <span className="material-symbols-outlined text-3xl">smart_toy</span>
                   </div>
                   <div className="absolute -bottom-1 -right-1 size-4 bg-primary border-4 border-white dark:border-slate-900 rounded-full animate-pulse"></div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Core AI Columbo</h3>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sincronizado / Auditando</p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Columbito</h3>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Asistente IA Sincronizado</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -341,7 +340,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}
-                    placeholder={isRecording ? "Capturando frecuencia de voz..." : "Enviar comando operativo..."}
+                    placeholder={isRecording ? "Columbito te escucha..." : "Escribe a Columbito..."}
                     className={`
                       w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-2xl 
                       px-6 py-5 text-sm font-bold dark:text-white outline-none focus:ring-4 focus:ring-primary/10 
