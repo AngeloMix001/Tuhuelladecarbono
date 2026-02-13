@@ -306,18 +306,21 @@ const ImpactTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const MitigationLever: React.FC<{ label: string, value: string, percent: number, color: string, icon: string }> = ({ label, value, percent, color, icon }) => (
-  <div className="bg-white/5 border border-white/10 p-5 rounded-[24px] hover:border-white/30 transition-all group">
+const MitigationLever: React.FC<{ label: string, value: string, percent: number, color: string, icon: string, delay?: string }> = ({ label, value, percent, color, icon, delay = "0ms" }) => (
+  <div 
+    className="bg-white/5 border border-white/10 p-5 rounded-[24px] transition-all duration-300 group hover:border-white/40 hover:scale-[1.05] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] cursor-default animate-in slide-in-from-bottom-8"
+    style={{ animationDelay: delay }}
+  >
     <div className="flex items-center justify-between mb-4">
-      <div className={`size-10 rounded-xl flex items-center justify-center text-white`} style={{ backgroundColor: color }}>
+      <div className={`size-10 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:rotate-12`} style={{ backgroundColor: color }}>
         <span className="material-symbols-outlined text-xl">{icon}</span>
       </div>
       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Aporte: {percent}%</span>
     </div>
     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-    <p className="text-2xl font-black text-white tracking-tighter mb-4">{value} <span className="text-[10px] text-slate-500 font-bold uppercase">tCO₂e</span></p>
+    <p className="text-2xl font-black text-white tracking-tighter mb-4 transition-colors duration-300 group-hover:text-primary">{value} <span className="text-[10px] text-slate-500 font-bold uppercase">tCO₂e</span></p>
     <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-      <div className="h-full transition-all duration-1000" style={{ width: `${percent}%`, backgroundColor: color }}></div>
+      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${percent}%`, backgroundColor: color }}></div>
     </div>
   </div>
 );
@@ -410,9 +413,9 @@ const VetiverProject: React.FC = () => {
             </div>
 
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 pt-16 border-t border-white/10">
-              <MitigationLever label="Sumideros Vetiver" value="2,840" percent={65} color={COLORS.primary} icon="eco" />
-              <MitigationLever label="Energía Renovable" value="1,280" percent={25} color={COLORS.blue500} icon="solar_power" />
-              <MitigationLever label="Flota Hidrógeno" value="460" percent={10} color="#f97316" icon="local_shipping" />
+              <MitigationLever label="Sumideros Vetiver" value="2,840" percent={65} color={COLORS.primary} icon="eco" delay="100ms" />
+              <MitigationLever label="Energía Renovable" value="1,280" percent={25} color={COLORS.blue500} icon="solar_power" delay="200ms" />
+              <MitigationLever label="Flota Hidrógeno" value="460" percent={10} color="#f97316" icon="local_shipping" delay="300ms" />
             </div>
           </section>
         </div>
