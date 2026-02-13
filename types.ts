@@ -1,27 +1,31 @@
 
-export interface KPIData {
+export type Page = 'dashboard' | 'data-entry' | 'reports' | 'history' | 'config' | 'info' | 'profile' | 'vetiver';
+
+export interface KPI {
   label: string;
   value: string;
-  unit: string;
+  unit?: string;
   trend?: string;
-  trendType?: 'positive' | 'negative' | 'neutral';
+  trendUp?: boolean;
   icon: string;
-  subtitle: string;
+  description: string;
+  color?: string;
+  tag?: string;
 }
 
-export interface ActivityLog {
-  id: string;
-  type: 'login' | 'report' | 'update' | 'security';
-  title: string;
-  timestamp: string;
-  icon: string;
-}
-
-export interface ReportRecord {
+export interface HistoryRecord {
   id: string;
   date: string;
-  origin: string;
+  location: string;
   emissions: number;
   capture: number;
-  status: 'VALIDADO' | 'EN REVISIÓN';
+  status: 'Validated' | 'In Review' | 'Cancelled';
+}
+
+export interface OperationData {
+  date: string;
+  trucks: number;
+  containers: number;
+  electricity: number;
+  diesel: number;
 }
