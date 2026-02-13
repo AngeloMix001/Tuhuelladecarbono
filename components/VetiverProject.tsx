@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import * as THREE from 'three';
 import { 
   XAxis, 
   YAxis, 
@@ -32,237 +33,191 @@ const PROJECTION_DATA = [
   { label: '4,200 kg', h: '100%', year: '2026', desc: 'Máximo biológico', highlight: true, depth: 1.25 },
 ];
 
-const INNOVATION_LOG = [
-  {
-    id: 1,
-    title: "Consolidación Vetiver Fase III",
-    category: "Biológico",
-    date: "Enero 2026",
-    image: "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&q=80&w=800",
-    desc: "10 hectáreas de Vetiver alcanzando su máximo potencial de captura en el cinturón verde.",
-    status: "Operativo"
-  },
-  {
-    id: 2,
-    title: "Monitoreo Satelital",
-    category: "Tecnología",
-    date: "Marzo 2026",
-    image: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&q=80&w=800",
-    desc: "Integración de datos satelitales para verificación de biomasa en tiempo real.",
-    status: "Activo"
-  },
-  {
-    id: 3,
-    title: "Micro-red Hidrógeno",
-    category: "Energía",
-    date: "Mayo 2026",
-    image: "https://images.unsplash.com/photo-1563791877225-450f34024508?auto=format&fit=crop&q=80&w=800",
-    desc: "Primeras pruebas de maquinaria pesada propulsada por hidrógeno generado in-situ.",
-    status: "Piloto"
-  },
-];
-
 const GROWTH_FACTORS = {
   'Establecido (Año 1-2)': 7.5,
   'Maduro (Año 3-5)': 15.0,
   'Consolidado (Año 6+)': 18.5,
 };
 
-interface InteractiveState {
-  rotateX: number;
-  rotateY: number;
-  zoom: number;
-  panX: number;
-  panY: number;
-  isAutoOrbit: boolean;
+// --- Optimized Three.js Visualization Component ---
+
+interface ThreeRootStageProps {
+  depth: number;
+  year: string;
+  color: string;
 }
 
-const INITIAL_STATE: InteractiveState = {
-  rotateX: -15,
-  rotateY: 25,
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-  isAutoOrbit: true
-};
+const ThreeRootStage: React.FC<ThreeRootStageProps> = ({ depth, year, color }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const rootMeshRef = useRef<THREE.Group | null>(null);
+  const requestRef = useRef<number>(0);
 
-const LERP_FACTOR = 0.12; 
-
-const Interactive3DStage: React.FC<{ depth: number, year: string, color: string, isLarge?: boolean }> = ({ depth, year, color, isLarge }) => {
-  const targets = useRef<InteractiveState>({ ...INITIAL_STATE });
-  const [current, setCurrent] = useState<InteractiveState>({ ...INITIAL_STATE });
-  const [interactionMode, setInteractionMode] = useState<'rotate' | 'pan' | 'zoom' | 'idle'>('idle');
+  // Memoize materials and geometries for reuse
+  const boxGeometry = useMemo(() => new THREE.BoxGeometry(1.6, 3, 1.6), []);
+  const cubeMaterial = useMemo(() => new THREE.MeshPhongMaterial({ 
+    color: 0x14100b, 
+    transparent: true, 
+    opacity: 0.95,
+    shininess: 5 
+  }), []);
   
-  const stageRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-  const lastPos = useRef({ x: 0, y: 0 });
-  const requestRef = useRef<number>(null);
+  const rootMaterial = useMemo(() => new THREE.MeshLambertMaterial({ 
+    color: color,
+    emissive: color,
+    emissiveIntensity: 0.2
+  }), [color]);
 
-  const lerp = (start: number, end: number, factor: number) => start + (end - start) * factor;
-
-  const animate = useCallback(() => {
-    if (targets.current.isAutoOrbit && !isDragging.current) {
-      targets.current.rotateY += 0.2;
+  // Procedural Root System Generator
+  const generateRootSystem = useCallback((depthScale: number) => {
+    const group = new THREE.Group();
+    const numRoots = 15;
+    const rootSegments = 16;
+    
+    for (let i = 0; i < numRoots; i++) {
+      const points = [];
+      const spread = 0.35;
+      const angle = (i / numRoots) * Math.PI * 2;
+      const radius = 0.1 + Math.random() * 0.2;
+      
+      for (let j = 0; j <= rootSegments; j++) {
+        const t = j / rootSegments;
+        const wiggleX = (Math.random() - 0.5) * 0.15 * t;
+        const wiggleZ = (Math.random() - 0.5) * 0.15 * t;
+        const x = Math.cos(angle) * radius + wiggleX + (Math.cos(angle) * spread * t);
+        const z = Math.sin(angle) * radius + wiggleZ + (Math.sin(angle) * spread * t);
+        const y = 1.5 - (t * 3 * depthScale); // From top of box down
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      
+      const curve = new THREE.CatmullRomCurve3(points);
+      // Limit radial segments for performance
+      const geometry = new THREE.TubeGeometry(curve, 16, 0.015 * (1.1 - points[points.length-1].y / 1.5), 6, false);
+      const tube = new THREE.Mesh(geometry, rootMaterial);
+      group.add(tube);
     }
-
-    setCurrent(prev => ({
-      rotateX: lerp(prev.rotateX, targets.current.rotateX, LERP_FACTOR),
-      rotateY: lerp(prev.rotateY, targets.current.rotateY, LERP_FACTOR),
-      zoom: lerp(prev.zoom, targets.current.zoom, LERP_FACTOR),
-      panX: lerp(prev.panX, targets.current.panX, LERP_FACTOR),
-      panY: lerp(prev.panY, targets.current.panY, LERP_FACTOR),
-      isAutoOrbit: targets.current.isAutoOrbit
-    }));
-
-    requestRef.current = requestAnimationFrame(animate);
-  }, []);
+    return group;
+  }, [rootMaterial]);
 
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    if (!containerRef.current) return;
+
+    const width = containerRef.current.clientWidth;
+    const height = containerRef.current.clientHeight;
+
+    // Scene Setup
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+    camera.position.set(5, 3, 6.5);
+    camera.lookAt(0, -0.5, 0);
+    cameraRef.current = camera;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(width, height);
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // Lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
+    scene.add(hemiLight);
+
+    const pointLight = new THREE.PointLight(color, 1.5, 12);
+    pointLight.position.set(0, 2, 0);
+    scene.add(pointLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+
+    // Visual Elements
+    const soil = new THREE.Mesh(boxGeometry, cubeMaterial);
+    scene.add(soil);
+
+    const roots = generateRootSystem(depth);
+    scene.add(roots);
+    rootMeshRef.current = roots;
+
+    // Animation Loop
+    const animate = () => {
+      if (!renderer || !scene || !camera) return;
+      
+      scene.rotation.y += 0.004;
+      
+      // Dynamic sway for roots
+      if (rootMeshRef.current) {
+        rootMeshRef.current.children.forEach((root, idx) => {
+          root.rotation.z = Math.sin(Date.now() * 0.0008 + idx) * 0.015;
+          root.rotation.x = Math.cos(Date.now() * 0.001 + idx) * 0.015;
+        });
+      }
+
+      renderer.render(scene, camera);
+      requestRef.current = requestAnimationFrame(animate);
     };
-  }, [animate]);
+    animate();
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    isDragging.current = true;
-    lastPos.current = { x: e.clientX, y: e.clientY };
-    targets.current.isAutoOrbit = false;
-    if (e.shiftKey || e.button === 1) setInteractionMode('pan');
-    else setInteractionMode('rotate');
-    stageRef.current?.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  };
+    // Resize Handler
+    const handleResize = () => {
+      if (!containerRef.current || !camera || !renderer) return;
+      const w = containerRef.current.clientWidth;
+      const h = containerRef.current.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', handleResize);
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging.current) {
-      if (e.shiftKey) setInteractionMode('pan');
-      else setInteractionMode('idle');
-      return;
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(requestRef.current);
+      renderer.dispose();
+      if (containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+    };
+  }, []); // Run only on mount
+
+  // Efficiently update depth without full re-mount
+  useEffect(() => {
+    if (sceneRef.current && rootMeshRef.current) {
+      sceneRef.current.remove(rootMeshRef.current);
+      // Proper disposal of old geometries to prevent memory leaks
+      rootMeshRef.current.children.forEach((child: any) => {
+        child.geometry.dispose();
+      });
+      
+      const newRoots = generateRootSystem(depth);
+      sceneRef.current.add(newRoots);
+      rootMeshRef.current = newRoots;
     }
-    const deltaX = e.clientX - lastPos.current.x;
-    const deltaY = e.clientY - lastPos.current.y;
-    if (e.shiftKey || e.button === 1) {
-      setInteractionMode('pan');
-      targets.current.panX += deltaX;
-      targets.current.panY += deltaY;
-    } else {
-      setInteractionMode('rotate');
-      targets.current.rotateY += deltaX * 0.4;
-      targets.current.rotateX = Math.max(-60, Math.min(60, targets.current.rotateX - deltaY * 0.4));
-    }
-    lastPos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    isDragging.current = false;
-    setInteractionMode('idle');
-    stageRef.current?.releasePointerCapture(e.pointerId);
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    setInteractionMode('zoom');
-    const zoomSpeed = 0.0015;
-    targets.current.zoom = Math.max(0.4, Math.min(3, targets.current.zoom - e.deltaY * zoomSpeed));
-    setTimeout(() => { if (!isDragging.current) setInteractionMode('idle'); }, 1000);
-  };
-
-  const resetView = () => { targets.current = { ...INITIAL_STATE, isAutoOrbit: true }; };
-
-  const brightness = Math.cos((current.rotateY * Math.PI) / 180) * 0.3 + 0.9;
-  const sideBrightness = Math.sin((current.rotateY * Math.PI) / 180) * 0.3 + 0.7;
+  }, [depth, generateRootSystem]);
 
   return (
-    <div 
-      ref={stageRef}
-      className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing overflow-hidden select-none bg-gradient-to-b from-slate-900 via-slate-950 to-black touch-none group/viewer"
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onWheel={handleWheel}
-      onDoubleClick={resetView}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <style>{`
-        .perspective-1000 { perspective: 1000px; }
-        .cube-container { position: relative; transform-style: preserve-3d; transition: width 0.3s ease, height 0.3s ease; }
-        .cube-face { position: absolute; width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.04); transition: filter 0.3s ease; }
-        .front-face { transform: translateZ(40px); background: #23180c; border-radius: 2px; }
-        .top-face { height: 80px; transform: rotateX(90deg) translateZ(40px); }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        /* Optimized Subtle Sway Animations */
-        @keyframes root-sway-subtle { 
-          0%, 100% { transform: rotate(-0.4deg); } 
-          50% { transform: rotate(0.4deg); } 
-        }
-        @keyframes root-sway-lateral { 
-          0%, 100% { transform: skewX(-0.6deg) scaleY(1); } 
-          50% { transform: skewX(0.6deg) scaleY(1.01); } 
-        }
-
-        .root-path { 
-          will-change: transform; 
-          transform-origin: 50% 0%; 
-        }
-
-        .animate-root-sway-primary { 
-          animation: root-sway-subtle 10s ease-in-out infinite; 
-        }
-        .animate-root-sway-lateral-1 { 
-          animation: root-sway-lateral 12s ease-in-out infinite; 
-          animation-delay: -3s;
-        }
-        .animate-root-sway-lateral-2 { 
-          animation: root-sway-lateral 14s ease-in-out infinite; 
-          animation-delay: -7s;
-        }
-      `}</style>
-
-      <div className="absolute top-8 right-8 flex flex-col items-end gap-2 z-30 pointer-events-none">
-        <div className={`px-4 py-2 rounded-2xl border transition-all duration-300 flex items-center gap-3 shadow-2xl backdrop-blur-md ${interactionMode !== 'idle' ? 'bg-primary/20 border-primary/40 text-primary scale-100 opacity-100' : 'bg-white/5 border-white/10 text-slate-500 scale-95 opacity-40'}`}>
-          <span className="material-symbols-outlined text-lg">
-            {interactionMode === 'pan' ? 'pan_tool' : interactionMode === 'zoom' ? 'zoom_in' : '3d_rotation'}
+    <div ref={containerRef} className="w-full h-full bg-gradient-to-b from-slate-900 via-slate-950 to-black relative overflow-hidden">
+      <div className="absolute top-8 left-8 z-20 pointer-events-none">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+            <span className="size-2 rounded-full bg-primary animate-pulse"></span> Bio-Engineered System 4.0
           </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">MODO: {interactionMode === 'idle' ? 'VISTA LIBRE' : interactionMode.toUpperCase()}</span>
+          <span className="text-3xl font-black text-white tracking-tighter">{year}</span>
         </div>
       </div>
-
-      <div className="absolute inset-0 pointer-events-none z-10">
-        <div className="absolute top-8 left-8 flex flex-col gap-1">
-          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="size-2 rounded-full bg-primary animate-pulse"></span> Bio-Simulator 2026 v3.0
-          </span>
-          <span className="text-[32px] font-black text-white tracking-tighter">{year}</span>
-        </div>
-      </div>
-
-      <div className="perspective-1000" style={{ transform: `translate(${current.panX}px, ${current.panY}px) scale(${current.zoom})` }}>
-        <div className="cube-container" style={{ transform: `rotateX(${current.rotateX}deg) rotateY(${current.rotateY}deg)`, width: isLarge ? '240px' : '180px', height: isLarge ? '360px' : '280px' }}>
-          <div className="cube-face top-face flex items-center justify-center overflow-hidden" style={{ backgroundColor: color }}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.5)_100%)]"></div>
-            <div className="text-white/80 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-                <span className="material-symbols-outlined text-6xl animate-pulse">eco</span>
-            </div>
-          </div>
-          <div className="cube-face front-face" style={{ filter: `brightness(${brightness})` }}>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/90"></div>
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 100 200">
-              <path className="root-path animate-root-sway-primary" d={`M 50 0 L 50 ${200 * depth}`} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 10px ${color})`, opacity: 0.9 }} />
-              <path className="root-path animate-root-sway-lateral-1" d={`M 50 ${20 * depth} Q 30 ${70 * depth} 15 ${120 * depth} M 50 ${90 * depth} Q 25 ${140 * depth} 30 ${200 * depth}`} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${color})`, opacity: 0.8 }} />
-              <path className="root-path animate-root-sway-lateral-2" d={`M 50 ${20 * depth} Q 70 ${70 * depth} 85 ${120 * depth} M 50 ${90 * depth} Q 75 ${140 * depth} 70 ${200 * depth}`} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${color})`, opacity: 0.8 }} />
-            </svg>
-          </div>
-          <div className="cube-face right-face" style={{ filter: `brightness(${sideBrightness})` }}></div>
-          <div className="cube-face left-face" style={{ filter: `brightness(${2-sideBrightness})` }}></div>
+      <div className="absolute bottom-8 left-8 z-20 pointer-events-none">
+        <div className="bg-black/60 backdrop-blur-md border border-white/5 px-4 py-2 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
+          WebGL Performance Optimized
         </div>
       </div>
     </div>
   );
 };
+
+// --- Recharts Components & Main View ---
 
 const ImpactTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -368,7 +323,7 @@ const VetiverProject: React.FC = () => {
               <div className="flex flex-col md:items-end gap-3 bg-white/5 px-8 py-6 rounded-[40px] border border-white/10 backdrop-blur-2xl shadow-2xl group hover:border-primary/40 transition-all">
                 <div className="flex items-center gap-4">
                   <div className="size-3 rounded-full bg-primary animate-pulse"></div>
-                  <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.3em]">Eficiencia Global 2026</span>
+                  <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.3em]">Eficiencia de Terminal</span>
                 </div>
                 <p className="text-5xl font-black text-white tracking-tighter">88.2% <span className="text-xs text-slate-500 font-black uppercase tracking-widest ml-1">NET GAIN</span></p>
               </div>
@@ -398,7 +353,7 @@ const VetiverProject: React.FC = () => {
 
         <div className="lg:col-span-4 space-y-8">
            <section className="bg-slate-950 rounded-[56px] overflow-hidden border border-white/10 shadow-3xl h-[600px] relative ring-1 ring-white/5 group">
-              <Interactive3DStage depth={selectedData.depth} year={selectedData.year} color={COLORS.primary} />
+              <ThreeRootStage depth={selectedData.depth} year={selectedData.year} color={COLORS.primary} />
               <div className="absolute top-1/2 right-8 -translate-y-1/2 flex flex-col gap-4 z-20">
                 {PROJECTION_DATA.map((d, i) => (
                   <button 
