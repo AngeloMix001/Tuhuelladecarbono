@@ -18,7 +18,7 @@ const FormularioIngreso: React.FC = () => {
     containers: '',
     electricity: '',
     diesel: '',
-    origen: 'Terminal Central'
+    origen: ''
   });
 
   const emisionesTotales = useMemo(() => {
@@ -29,12 +29,17 @@ const FormularioIngreso: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.origen) {
+      alert("Por favor seleccione un Origen");
+      return;
+    }
     setIsSaving(true);
 
     try {
       await insertRegistro({
         fecha: form.fecha,
         emisiones: emisionesTotales,
+        captura: 0, // Por defecto 0 para registros manuales de emisión
         origen: form.origen,
         datos: {
           trucks: parseInt(form.trucks) || 0,
@@ -51,7 +56,7 @@ const FormularioIngreso: React.FC = () => {
         containers: '',
         electricity: '',
         diesel: '',
-        origen: 'Terminal Central'
+        origen: ''
       });
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
@@ -72,9 +77,23 @@ const FormularioIngreso: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2 col-span-1 md:col-span-2">
+          <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha Operativa</label>
             <input type="date" required value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Origen (Terminal)</label>
+            <select 
+              required 
+              value={form.origen} 
+              onChange={e => setForm({...form, origen: e.target.value})} 
+              className="w-full bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="" disabled>Seleccione terminal...</option>
+              <option value="Puerto Columbo Valparaíso">Puerto Columbo Valparaíso</option>
+              <option value="Puerto Columbo San Antonio">Puerto Columbo San Antonio</option>
+            </select>
           </div>
 
           <InputGroup label="Camiones" value={form.trucks} onChange={v => setForm({...form, trucks: v})} unit="uds" icon="local_shipping" />
@@ -96,7 +115,7 @@ const FormularioIngreso: React.FC = () => {
             disabled={isSaving || emisionesTotales <= 0}
             className="w-full md:w-auto px-10 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3"
           >
-            {isSaving ? <span className="material-symbols-outlined animate-spin">sync</span> : <span className="material-symbols-outlined">save</span>}
+            {isSaving ? <span className="material-symbols-outlined animate-spin text-lg">sync</span> : <span className="material-symbols-outlined text-lg">save</span>}
             {isSaving ? 'GUARDANDO...' : 'GUARDAR REGISTRO'}
           </button>
         </div>

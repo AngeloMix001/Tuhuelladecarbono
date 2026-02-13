@@ -8,7 +8,6 @@ export const useRegistros = () => {
   const [registros, setRegistros] = useState<RegistroCO2[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // MOCK: Fetch Registros (Simula llamada a Supabase/API)
   const fetchRegistros = useCallback(async () => {
     setLoading(true);
     try {
@@ -22,7 +21,6 @@ export const useRegistros = () => {
     }
   }, []);
 
-  // MOCK: Insertar Registro
   const insertRegistro = async (nuevo: Omit<RegistroCO2, 'id' | 'timestamp' | 'estado'>) => {
     const registroCompleto: RegistroCO2 = {
       ...nuevo,
@@ -38,7 +36,6 @@ export const useRegistros = () => {
     return registroCompleto;
   };
 
-  // MOCK: Actualizar Registro
   const updateRegistro = async (id: string, cambios: Partial<RegistroCO2>) => {
     const actualizados = registros.map(r => r.id === id ? { ...r, ...cambios } : r);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(actualizados));
@@ -46,12 +43,10 @@ export const useRegistros = () => {
     window.dispatchEvent(new Event('localDataChanged'));
   };
 
-  // MOCK: Cambiar Estado
   const cambiarEstado = async (id: string, nuevoEstado: EstadoRegistro) => {
     await updateRegistro(id, { estado: nuevoEstado });
   };
 
-  // MOCK: Eliminar Registro
   const deleteRegistro = async (id: string) => {
     const actualizados = registros.filter(r => r.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(actualizados));

@@ -13,6 +13,7 @@ export interface RegistroCO2 {
   fecha: string;
   timestamp: string;
   emisiones: number; // en toneladas tCO2e
+  captura: number;   // en toneladas tCO2e
   datos: DatosOperativos;
   estado: EstadoRegistro;
   observaciones?: string;
