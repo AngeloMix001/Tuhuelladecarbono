@@ -13,7 +13,8 @@ import {
   ComposedChart,
   Bar,
   Cell,
-  Legend
+  Legend,
+  Line // Import added
 } from 'recharts';
 import { COLORS } from '../constants';
 import { formatNumber } from '../utils/format';
@@ -385,13 +386,65 @@ const VetiverProject: React.FC = () => {
             <div className="h-[400px] w-full relative z-10 min-h-[400px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={400}>
                 <ComposedChart data={HISTORICAL_EMISSIONS} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="12 12" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 900, fill: '#64748b', letterSpacing: '2px' }} dy={20} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#475569' }} unit=" t" />
-                  <Tooltip content={<ImpactTooltip />} />
-                  <Area type="monotone" dataKey="real" name="Emisiones Netas" stroke={COLORS.primary} strokeWidth={8} fillOpacity={0.1} fill={COLORS.primary} isAnimationActive={!isChartLoading} />
-                  <Bar dataKey="avoided" barSize={10} fill="#3b82f6" radius={[8, 8, 0, 0]} opacity={0.5} name="Carbono Evitado" />
-                  <ReferenceLine y={0} stroke="rgba(17, 212, 33, 0.4)" strokeDasharray="20 10" label={{ position: 'right', value: 'TARGET ZERO REACHED', fill: COLORS.primary, fontSize: 11, fontWeight: 900, letterSpacing: '3px' }} />
+                  <defs>
+                    <linearGradient id="colorReal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorAvoided" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis 
+                    dataKey="year" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fontWeight: 700, fill: '#94a3b8', letterSpacing: '1px' }} 
+                    dy={15} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} 
+                    unit=" t" 
+                  />
+                  <Tooltip content={<ImpactTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                  <ReferenceLine y={0} stroke={COLORS.primary} strokeDasharray="3 3" opacity={0.5} label={{ position: 'right', value: 'TARGET ZERO REACHED', fill: COLORS.primary, fontSize: 10, fontWeight: 900, letterSpacing: '2px' }} />
+                  
+                  {/* Escenario BAU (Business As Usual) para contexto */}
+                  <Line 
+                    type="monotone" 
+                    dataKey="bau" 
+                    name="Escenario Base (BAU)" 
+                    stroke="#64748b" 
+                    strokeWidth={2} 
+                    strokeDasharray="5 5" 
+                    dot={false}
+                    activeDot={false}
+                    opacity={0.5}
+                  />
+
+                  {/* Barras de Carbono Evitado */}
+                  <Bar 
+                    dataKey="avoided" 
+                    name="Carbono Evitado" 
+                    barSize={16} 
+                    fill="url(#colorAvoided)" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+
+                  {/* Área de Emisiones Netas */}
+                  <Area 
+                    type="monotone" 
+                    dataKey="real" 
+                    name="Emisiones Netas" 
+                    stroke={COLORS.primary} 
+                    strokeWidth={4} 
+                    fill="url(#colorReal)" 
+                    isAnimationActive={!isChartLoading} 
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
