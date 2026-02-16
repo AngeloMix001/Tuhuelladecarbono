@@ -6,6 +6,8 @@ export interface DatosOperativos {
   containers: number;
   electricity: number;
   diesel: number;
+  fechaInicio?: string;
+  fechaFin?: string;
 }
 
 export interface RegistroCO2 {

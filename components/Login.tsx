@@ -25,7 +25,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setIsLoading(true);
     setError('');
 
-    // Validación restringida a las credenciales solicitadas
     setTimeout(() => {
       if (email === 'agutierrez@puertocolumbo.com' && password === 'Angel2026') {
         onLogin(rememberMe);
@@ -38,7 +37,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 relative overflow-hidden">
-      {/* Decoración de fondo */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full"></div>
       
@@ -49,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <LogoTC />
             </div>
             <h1 className="text-2xl font-black text-white uppercase tracking-tight text-center leading-none">Puerto Columbo S.A.</h1>
-            <p className="text-primary text-[10px] font-black uppercase tracking-[0.3em] mt-3">Gestión CO₂ – Acceso Autorizado</p>
+            <p className="text-primary text-[10px] font-black uppercase tracking-[0.3em] mt-3">Gestión Ambiental – Acceso Autorizado</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -100,7 +98,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 />
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-300 transition-colors">Recordarme</span>
               </label>
-              <a href="#" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">¿Olvido su clave?</a>
             </div>
 
             <button 
@@ -108,22 +105,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               disabled={isLoading}
               className="w-full py-5 bg-primary hover:bg-primary/90 text-white font-black rounded-[24px] shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-xs"
             >
-              {isLoading ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-lg">sync</span>
-                  Verificando Acceso...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-lg">login</span>
-                  Iniciar Sesión
-                </>
-              )}
+              {isLoading ? 'Verificando...' : 'Iniciar Sesión'}
             </button>
           </form>
 
           <div className="mt-10 pt-10 border-t border-white/5 text-center">
-            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">Puerto Columbo S.A. – Área Privada</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">© 2026 Puerto Columbo S.A. – Acceso Restringido</p>
           </div>
         </div>
       </div>

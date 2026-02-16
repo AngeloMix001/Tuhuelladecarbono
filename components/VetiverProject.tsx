@@ -16,6 +16,7 @@ import {
   Legend
 } from 'recharts';
 import { COLORS } from '../constants';
+import { formatNumber } from '../utils/format';
 
 const HISTORICAL_EMISSIONS = [
   { year: '2026', real: 850, bau: 4800, avoided: 3950, savings: 98750, milestone: 'Optimización IA' },
@@ -28,11 +29,11 @@ const HISTORICAL_EMISSIONS = [
 // Cálculos basados en 250m2 iniciales + 50m2/año con densidad 5 plantas/m2
 // Factores progresivos de maduración biológica aplicados
 const PROJECTION_DATA = [
-  { label: '9,375 kg', year: '2026', depth: 1.0, leaves: 0.8 }, // 250m2 * 5 * 7.5 (Establecido)
-  { label: '13,500 kg', year: '2027', depth: 1.4, leaves: 1.1 }, // 300m2 * 5 * 9.0 (Transición)
-  { label: '21,000 kg', year: '2028', depth: 1.9, leaves: 1.4 }, // 350m2 * 5 * 12.0 (Madurando)
-  { label: '30,000 kg', year: '2029', depth: 2.4, leaves: 1.8 }, // 400m2 * 5 * 15.0 (Maduro)
-  { label: '41,625 kg', year: '2030', depth: 3.0, leaves: 2.2 }, // 450m2 * 5 * 18.5 (Consolidado)
+  { label: '9.375 kg', year: '2026', depth: 1.0, leaves: 0.8 }, // 250m2 * 5 * 7.5 (Establecido)
+  { label: '13.500 kg', year: '2027', depth: 1.4, leaves: 1.1 }, // 300m2 * 5 * 9.0 (Transición)
+  { label: '21.000 kg', year: '2028', depth: 1.9, leaves: 1.4 }, // 350m2 * 5 * 12.0 (Madurando)
+  { label: '30.000 kg', year: '2029', depth: 2.4, leaves: 1.8 }, // 400m2 * 5 * 15.0 (Maduro)
+  { label: '41.625 kg', year: '2030', depth: 3.0, leaves: 2.2 }, // 450m2 * 5 * 18.5 (Consolidado)
 ];
 
 const GROWTH_FACTORS = {
@@ -274,12 +275,12 @@ const ImpactTooltip = ({ active, payload, label }: any) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-10">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Emisiones Brutas</span>
-            <span className="text-sm font-black text-white">{real.toLocaleString()} t</span>
+            <span className="text-sm font-black text-white">{formatNumber(real)} t</span>
           </div>
           <div className="pt-4 mt-4 border-t border-white/10 space-y-3">
             <div className="flex items-center justify-between gap-10">
               <span className="text-[11px] font-black text-primary uppercase tracking-widest">Total Evitado</span>
-              <span className="text-base font-black text-primary">{avoided > 0 ? '-' : '+'}{Math.abs(avoided).toLocaleString()} tCO2e</span>
+              <span className="text-base font-black text-primary">{avoided > 0 ? '-' : '+'}{formatNumber(Math.abs(avoided))} tCO2e</span>
             </div>
           </div>
         </div>
@@ -377,7 +378,7 @@ const VetiverProject: React.FC = () => {
                   <div className="size-3 rounded-full bg-primary animate-pulse"></div>
                   <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.3em]">Eficiencia Estimada</span>
                 </div>
-                <p className="text-5xl font-black text-white tracking-tighter">104.2% <span className="text-xs text-slate-500 font-black uppercase tracking-widest ml-1">NET NEGATIVE</span></p>
+                <p className="text-5xl font-black text-white tracking-tighter">104,2% <span className="text-xs text-slate-500 font-black uppercase tracking-widest ml-1">NET NEGATIVE</span></p>
               </div>
             </div>
 
@@ -396,8 +397,8 @@ const VetiverProject: React.FC = () => {
             </div>
 
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 pt-16 border-t border-white/10">
-              <MitigationLever label="Sumideros Vetiver (2030)" value="4,500" percent={70} color={COLORS.primary} icon="eco" delay="100ms" />
-              <MitigationLever label="Energía Solar (2030)" value="1,200" percent={19} color={COLORS.blue500} icon="solar_power" delay="200ms" />
+              <MitigationLever label="Sumideros Vetiver (2030)" value="4.500" percent={70} color={COLORS.primary} icon="eco" delay="100ms" />
+              <MitigationLever label="Energía Solar (2030)" value="1.200" percent={19} color={COLORS.blue500} icon="solar_power" delay="200ms" />
               <MitigationLever label="Hidrógeno Verde (2030)" value="700" percent={11} color="#f97316" icon="local_shipping" delay="300ms" />
             </div>
           </section>
@@ -482,7 +483,7 @@ const VetiverProject: React.FC = () => {
                   <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/10 animate-in slide-in-from-top-4">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">Proyección Anual 2030</p>
                     <div className="flex justify-center items-baseline gap-2">
-                      <span className="text-5xl font-black text-primary tracking-tighter">{simResult.capture.toLocaleString()}</span>
+                      <span className="text-5xl font-black text-primary tracking-tighter">{formatNumber(simResult.capture)}</span>
                       <span className="text-xs font-black text-primary/60 uppercase tracking-widest">kgCO₂e</span>
                     </div>
                   </div>

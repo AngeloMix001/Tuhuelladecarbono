@@ -1,7 +1,7 @@
 
 import React, { memo } from 'react';
-import { NavLink } from 'react-router-dom';
-import { NAVIGATION_ITEMS } from '../constants';
+import { Link, useLocation } from 'react-router-dom';
+import { NAVIGATION_ITEMS } from '../constants.tsx';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ const LogoTC = memo(() => (
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
   const complianceValue = 1;
+  const location = useLocation();
 
   return (
     <>
@@ -46,7 +47,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
                 <p className="text-neutral-green-600 dark:text-primary text-[10px] font-black uppercase tracking-[0.2em]">Gestión de Carbono</p>
               </div>
             </div>
-            {/* Botón de cerrar solo en móvil */}
             <button 
               onClick={onClose} 
               className="lg:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
@@ -56,22 +56,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
           </div>
 
           <nav className="flex flex-col gap-1">
-            {NAVIGATION_ITEMS.map((item) => (
-              <NavLink
-                key={item.id}
-                to={item.path}
-                className={({ isActive }) => 
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+            {NAVIGATION_ITEMS.map((item) => {
+              const isActive = item.path === '/' 
+                ? location.pathname === '/' 
+                : location.pathname.startsWith(item.path);
+              
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                     isActive 
                       ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary' 
                       : 'text-slate-600 hover:bg-neutral-green-50 dark:hover:bg-white/5 dark:text-slate-400'
-                  }`
-                }
-              >
-                <span className="material-symbols-outlined">{item.icon}</span>
-                <span className="text-sm">{item.label}</span>
-              </NavLink>
-            ))}
+                  }`}
+                >
+                  <span className="material-symbols-outlined">{item.icon}</span>
+                  <span className="text-sm">{item.label}</span>
+                </Link>
+              );
+            })}
             
             <button 
               onClick={onLogout}
@@ -100,8 +104,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
             <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 group cursor-pointer hover:border-primary/50 transition-all">
               <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-700 bg-cover bg-center shadow-sm" style={{ backgroundImage: "url('https://picsum.photos/seed/angel/100')" }}></div>
               <div className="overflow-hidden">
-                <p className="text-xs font-black text-slate-800 dark:text-white truncate">Angel Gutierrez</p>
-                <p className="text-[10px] text-slate-500 font-bold truncate">Gestor de Innovación</p>
+                <p className="text-xs font-black text-slate-800 dark:text-white truncate">Usuario Demo</p>
+                <p className="text-[10px] text-slate-500 font-bold truncate">Gestor Ambiental</p>
               </div>
               <span className="material-symbols-outlined text-sm text-slate-400 ml-auto group-hover:text-primary transition-colors">settings</span>
             </div>

@@ -18,10 +18,10 @@ interface AiInsightsProps {
 const STORAGE_CHAT_KEY = 'columbo_ai_chat_history';
 
 const QUICK_PROMPTS = [
-  { label: '📊 Resumen hoy', prompt: 'Dame un resumen de las emisiones registradas hoy.' },
-  { label: '📂 Exportar Excel', prompt: 'Genera el reporte Excel de todos los registros.' },
-  { label: '🌿 Estado Vetiver', prompt: '¿Cómo va la meta de captura del proyecto Vetiver?' },
-  { label: '⚠️ Alertas', prompt: '¿Hay algún registro pendiente de validación o rechazado?' },
+  { label: '📊 Resumen 2026', prompt: 'Dame un resumen del desempeño ambiental de Febrero 2026.' },
+  { label: '📂 Exportar Auditoría', prompt: 'Genera el reporte Excel de auditoría.' },
+  { label: '🌿 Meta 2027', prompt: '¿Cuál es el estado de la meta para 2027?' },
+  { label: '📉 Análisis Balance', prompt: 'Explícame la trayectoria negativa del primer semestre.' },
 ];
 
 const agentTools: FunctionDeclaration[] = [
@@ -119,7 +119,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem(STORAGE_CHAT_KEY);
     return saved ? JSON.parse(saved) : [
-      { role: 'model', text: 'Sistemas operativos. ¡Hola! Soy Columbito, tu asistente inteligente de Puerto Columbo.\n\nEstoy listo para ejecutar directivas de emisiones o procesar reportes mediante visión y voz.' }
+      { role: 'model', text: 'Sistemas operativos 2026 en línea. ¡Hola! Soy Columbito, tu asistente para la gestión Carbono Negativo.\n\nEl balance actual es -110.3 tCO2e. ¿En qué puedo ayudarte?' }
     ];
   });
   const [input, setInput] = useState('');
@@ -204,7 +204,14 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       const systemInstruction = `Eres Columbito, el asistente inteligente oficial de Puerto Columbo. Tu lenguaje es técnico, eficiente y servicial. 
-      KPIs ACTUALES: Emisiones ${kpis.totalEmissions}t, Balance ${kpis.netBalance}t.
+      CONTEXTO 2026:
+      - Emisiones Brutas: 945.2 t
+      - Balance Neto: -110.3 t (Carbono Negativo)
+      - Eficiencia: 8.1 kg/v
+      - Consumo Diesel: 12,100 L (Reducción del 75.2%)
+      - Captura Vetiver: 1,340.5 tCO2
+      - Meta 2027: Autonomía energética H2. Status: EN RUTA.
+      
       Si el usuario pide reportes o datos, usa herramientas obligatoriamente. Identifícate siempre como Columbito si te preguntan quién eres.`;
       
       const contentsParts: any[] = [];
@@ -257,7 +264,7 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
 
   const clearChat = () => {
     if (window.confirm("¿Deseas que Columbito olvide el historial actual?")) {
-      setMessages([{ role: 'model', text: 'Memoria purgada. ¡Hola de nuevo! Soy Columbito, listo para operar.' }]);
+      setMessages([{ role: 'model', text: 'Memoria purgada. ¡Hola de nuevo! Soy Columbito, listo para operar en 2026.' }]);
       localStorage.removeItem(STORAGE_CHAT_KEY);
     }
   };

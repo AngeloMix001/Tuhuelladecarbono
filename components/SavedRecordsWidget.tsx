@@ -2,6 +2,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RegistroCO2 } from '../types';
+import { formatNumber } from '../utils/format';
 
 const STORAGE_KEY = 'puerto_columbo_carbon_records';
 
@@ -23,7 +24,19 @@ const RecordDetailModal: React.FC<{ record: RegistroCO2, onClose: () => void }> 
               <span className="text-xs font-bold text-slate-400">{record.id}</span>
             </div>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white">{record.origen}</h3>
-            <p className="text-sm text-slate-500 font-bold">{record.fecha}</p>
+            
+            {/* Display Date Range if available, otherwise single date */}
+            {record.datos?.fechaInicio && record.datos?.fechaFin ? (
+               <div className="flex items-center gap-2 mt-1">
+                 <span className="material-symbols-outlined text-primary text-sm">date_range</span>
+                 <p className="text-sm text-slate-500 font-bold">
+                   Período: {record.datos.fechaInicio} al {record.datos.fechaFin}
+                 </p>
+               </div>
+            ) : (
+               <p className="text-sm text-slate-500 font-bold">{record.fecha}</p>
+            )}
+
           </div>
           <button onClick={onClose} className="p-2 bg-white dark:bg-white/10 rounded-full hover:bg-slate-100 dark:hover:bg-white/20 transition-colors">
             <span className="material-symbols-outlined text-slate-600 dark:text-slate-300">close</span>
@@ -34,14 +47,14 @@ const RecordDetailModal: React.FC<{ record: RegistroCO2, onClose: () => void }> 
             <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Emisiones Totales</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-slate-900 dark:text-white">{record.emisiones.toFixed(4)}</span>
+                <span className="text-3xl font-black text-slate-900 dark:text-white">{formatNumber(record.emisiones, 4)}</span>
                 <span className="text-xs font-bold text-slate-500">tCO₂e</span>
               </div>
             </div>
             <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20">
               <p className="text-[10px] font-black text-primary/70 uppercase tracking-widest mb-1">Captura Estimada</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-primary">{(record.captura || 0).toFixed(4)}</span>
+                <span className="text-3xl font-black text-primary">{formatNumber(record.captura || 0, 4)}</span>
                 <span className="text-xs font-bold text-primary/70">tCO₂e</span>
               </div>
             </div>
@@ -56,22 +69,22 @@ const RecordDetailModal: React.FC<{ record: RegistroCO2, onClose: () => void }> 
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-white/10">
                   <span className="material-symbols-outlined text-slate-400 text-lg mb-2">local_shipping</span>
                   <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Camiones</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white">{record.datos.trucks || 0}</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white">{formatNumber(record.datos.trucks || 0, 0)}</p>
                 </div>
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-white/10">
                   <span className="material-symbols-outlined text-slate-400 text-lg mb-2">box</span>
                   <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Contenedores</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white">{record.datos.containers || 0}</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white">{formatNumber(record.datos.containers || 0, 0)}</p>
                 </div>
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-white/10">
                   <span className="material-symbols-outlined text-slate-400 text-lg mb-2">bolt</span>
                   <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Energía</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white">{record.datos.electricity || 0} <span className="text-[9px]">kWh</span></p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white">{formatNumber(record.datos.electricity || 0, 0)} <span className="text-[9px]">kWh</span></p>
                 </div>
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-white/10">
                   <span className="material-symbols-outlined text-slate-400 text-lg mb-2">ev_station</span>
                   <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Diesel</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white">{record.datos.diesel || 0} <span className="text-[9px]">L</span></p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white">{formatNumber(record.datos.diesel || 0, 0)} <span className="text-[9px]">L</span></p>
                 </div>
               </div>
             </div>
@@ -146,7 +159,7 @@ const SavedRecordsWidget: React.FC = () => {
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <div className="flex items-center gap-1">
-                    <span className="text-lg font-black text-slate-800 dark:text-slate-200">{item.emisiones.toFixed(2)}</span>
+                    <span className="text-lg font-black text-slate-800 dark:text-slate-200">{formatNumber(item.emisiones, 2)}</span>
                     <span className="text-[10px] font-bold text-slate-500">tCO₂e</span>
                   </div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.origen}</p>

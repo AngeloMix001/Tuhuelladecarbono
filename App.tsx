@@ -1,19 +1,19 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './components/Dashboard';
-import DataInput from './components/DataInput';
-import VetiverProject from './components/VetiverProject';
-import Reports from './components/Reports';
-import Profile from './components/Profile';
-import Login from './components/Login';
+import Sidebar from './components/Sidebar.tsx';
+import Header from './components/Header.tsx';
+import Dashboard from './components/Dashboard.tsx';
+import DataInput from './components/DataInput.tsx';
+import VetiverProject from './components/VetiverProject.tsx';
+import Reports from './components/Reports.tsx';
+import Profile from './components/Profile.tsx';
+import Login from './components/Login.tsx';
+import AiInsights from './components/AiInsights.tsx';
 
 const App: React.FC = () => {
   const location = useLocation();
   
-  // Inicialización: Verifica tanto localStorage (persistente) como sessionStorage (volátil)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('isLoggedIn') === 'true' || 
            sessionStorage.getItem('isLoggedIn') === 'true';
@@ -45,10 +45,10 @@ const App: React.FC = () => {
     if (status) {
       if (remember) {
         localStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.removeItem('isLoggedIn'); // Limpiar el otro por si acaso
+        sessionStorage.removeItem('isLoggedIn');
       } else {
         sessionStorage.setItem('isLoggedIn', 'true');
-        localStorage.removeItem('isLoggedIn'); // Limpiar el otro por si acaso
+        localStorage.removeItem('isLoggedIn');
       }
     }
   };
@@ -70,20 +70,20 @@ const App: React.FC = () => {
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/ingreso': return 'Ingreso de Datos Operativos';
-      case '/vetiver': return 'Configuración de Captura CO₂';
+      case '/vetiver': return 'Proyecto Vetiver';
       case '/reportes': return 'Informes';
-      case '/perfil': return 'Cuenta / Perfil';
-      default: return 'Panel CO₂ Dashboard';
+      case '/perfil': return 'Perfil de Usuario';
+      default: return 'Panel de Gestión CO₂';
     }
   };
 
   const getBreadcrumb = () => {
     switch (location.pathname) {
-      case '/ingreso': return 'Gestión de CO₂ / Ingreso de Datos';
-      case '/vetiver': return 'Gestión de CO₂ / Proyecto Vetiver';
-      case '/reportes': return 'Gestión de CO₂ / Informes';
+      case '/ingreso': return 'Gestión / Ingreso de Datos';
+      case '/vetiver': return 'Gestión / Proyecto Vetiver';
+      case '/reportes': return 'Gestión / Informes';
       case '/perfil': return 'Cuenta / Perfil';
-      default: return 'Gestión de Carbono';
+      default: return 'Panel Principal';
     }
   };
 
@@ -109,8 +109,11 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        
+        <AiInsights kpis={{ totalEmissions: "1.790,5", netBalance: "1.577,2" }} data={[]} />
+
         <footer className="mt-auto p-8 border-t border-slate-200 dark:border-slate-800 text-center">
-          <p className="text-xs text-slate-400 font-medium">© 2026 Puerto Columbo S.A. – Panel de Gestión Ambiental Certificado</p>
+          <p className="text-xs text-slate-400 font-medium">© 2026 Puerto Columbo S.A. – Sistema de Gestión Ambiental</p>
         </footer>
       </div>
     </div>

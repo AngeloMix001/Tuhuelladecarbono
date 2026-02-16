@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useRegistros } from '../hooks/useRegistros';
 import { RegistroCO2, EstadoRegistro } from '../types';
 import { exportRegistrosToExcel } from '../utils/export';
+import { formatNumber } from '../utils/format';
 
 const TablaInformes: React.FC = () => {
   const { registros, loading, cambiarEstado, deleteRegistro } = useRegistros();
@@ -279,10 +280,10 @@ const TablaInformes: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <span className="text-sm font-black text-slate-900 dark:text-white">{row.emisiones.toFixed(4)}</span>
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{formatNumber(row.emisiones, 4)}</span>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <span className="text-sm font-black text-primary">{(row.captura || 0).toFixed(4)}</span>
+                    <span className="text-sm font-black text-primary">{formatNumber((row.captura || 0), 4)}</span>
                   </td>
                   <td className="px-8 py-5 text-center">
                     <StatusBadge estado={row.estado} />
