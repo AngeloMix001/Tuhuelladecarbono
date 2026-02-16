@@ -178,7 +178,8 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
         await insertRegistro({
           fecha: args.fecha,
           origen: args.origen,
-          emisiones: (args.electricity * 0.16 + args.diesel * 2.68) / 1000,
+          // Actualizado a 0.45 para alinearse con SEN Chile
+          emisiones: (args.electricity * 0.45 + args.diesel * 2.68) / 1000,
           captura: 0,
           datos: args
         });

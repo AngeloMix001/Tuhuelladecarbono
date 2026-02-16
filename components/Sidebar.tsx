@@ -20,7 +20,7 @@ const LogoTC = memo(() => (
 ));
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
-  const complianceValue = 84;
+  const complianceValue = 1;
 
   return (
     <>
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout }) => {
                 ></div>
               </div>
               <div className="flex justify-between items-center mt-2">
-                <p className="text-[10px] text-neutral-green-600 dark:text-slate-500 font-bold">Meta 2027</p>
+                <p className="text-[10px] text-neutral-green-600 dark:text-slate-500 font-bold">Meta 2026</p>
                 <p className="text-[10px] text-primary font-black">{complianceValue}%</p>
               </div>
             </div>

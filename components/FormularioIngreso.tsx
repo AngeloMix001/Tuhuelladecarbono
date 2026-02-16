@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useRegistros } from '../hooks/useRegistros';
 
 const EMISSION_FACTORS = {
-  ELECTRICITY: 0.16, // kgCO2e/kWh
+  ELECTRICITY: 0.45, // kgCO2e/kWh (SEN - Promedio Nacional Chile / Chilquinta)
   DIESEL: 2.68,      // kgCO2e/L
 };
 
@@ -108,6 +108,10 @@ const FormularioIngreso: React.FC = () => {
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-black text-primary">{emisionesTotales.toFixed(4)}</span>
               <span className="text-sm font-bold text-primary/70">tCO₂e</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-4 text-[9px] font-bold text-primary/60 uppercase tracking-wider border-t border-primary/10 pt-2">
+               <span title="Factor de emisión red eléctrica" className="flex items-center gap-1"><span className="material-symbols-outlined text-[10px]">bolt</span> Elec: {EMISSION_FACTORS.ELECTRICITY} kg/kWh</span>
+               <span title="Factor de emisión combustible diesel" className="flex items-center gap-1"><span className="material-symbols-outlined text-[10px]">ev_station</span> Diesel: {EMISSION_FACTORS.DIESEL} kg/L</span>
             </div>
           </div>
           <button 

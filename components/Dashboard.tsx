@@ -215,14 +215,6 @@ const Dashboard: React.FC = () => {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 ml-auto">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtro 2026:</span>
-          <select className="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold dark:text-white focus:ring-primary">
-            <option>Todas las fuentes</option>
-            <option>Solo Bio-Captura</option>
-            <option>Hidrógeno/Eléctrico</option>
-          </select>
-        </div>
       </div>
 
       <ExecutiveHeader kpis={kpis} />
