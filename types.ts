@@ -8,6 +8,7 @@ export interface DatosOperativos {
   diesel: number;
   fechaInicio?: string;
   fechaFin?: string;
+  transportEF?: number;
 }
 
 export interface RegistroCO2 {

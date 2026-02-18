@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRegistros } from '../hooks/useRegistros';
 import { formatNumber } from '../utils/format';
 
@@ -16,22 +16,44 @@ const FormularioIngreso: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Nuevo estado para el Factor de Emisión de Transporte (Default: 1)
+  const [transportEF, setTransportEF] = useState('1');
+
   const [form, setForm] = useState({
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaFin: new Date().toISOString().split('T')[0],
     trucks: '',
-    containers: '',
+    containers: '', // N
     electricity: '',
     diesel: '',
     origen: ''
   });
 
-  // Cálculo de emisiones (Trucks/Containers son datos operativos, Elec/Diesel generan la huella)
+  // Cálculo de emisiones
+  // Incluye Electricidad + Diesel + Transporte (N * EF)
   const emisionesTotales = useMemo(() => {
+    // 1. Electricidad
     const e = (parseFloat(form.electricity) || 0) * EMISSION_FACTORS.ELECTRICITY;
+    
+    // 2. Diesel (Maquinaria fija/otros)
     const d = (parseFloat(form.diesel) || 0) * EMISSION_FACTORS.DIESEL;
-    return (e + d) / 1000; // Convertir a toneladas
-  }, [form.electricity, form.diesel]);
+    
+    // 3. Transporte Interno: E(N) = N * EF
+    // N = número de contenedores (asumiendo 1 camión por contenedor, 1 km distancia)
+    const n = parseInt(form.containers) || 0;
+    const ef = parseFloat(transportEF) || 0;
+    const t = n * ef;
+
+    // Suma total en kg convertida a Toneladas
+    return (e + d + t) / 1000; 
+  }, [form.electricity, form.diesel, form.containers, transportEF]);
+
+  // Cálculo solo del transporte para visualización (en kg)
+  const emisionesTransporteKg = useMemo(() => {
+    const n = parseInt(form.containers) || 0;
+    const ef = parseFloat(transportEF) || 0;
+    return n * ef;
+  }, [form.containers, transportEF]);
 
   // Cálculo de Captura Vetiver (Basado en Rango de Fechas + Origen)
   const capturaTotal = useMemo(() => {
@@ -81,7 +103,9 @@ const FormularioIngreso: React.FC = () => {
           electricity: parseFloat(form.electricity) || 0,
           diesel: parseFloat(form.diesel) || 0,
           fechaInicio: form.fechaInicio,
-          fechaFin: form.fechaFin
+          fechaFin: form.fechaFin,
+          // Guardamos el EF usado para auditoría futura
+          transportEF: parseFloat(transportEF) || 1 
         }
       });
 
@@ -95,6 +119,9 @@ const FormularioIngreso: React.FC = () => {
         diesel: '',
         origen: ''
       });
+      // Resetear EF al default o mantenerlo? Generalmente se mantiene, pero aquí lo reseteamos por seguridad
+      setTransportEF('1'); 
+      
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       alert("Error al guardar el registro");
@@ -155,22 +182,66 @@ const FormularioIngreso: React.FC = () => {
 
         <div className="h-px bg-slate-100 dark:bg-white/5 my-6"></div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputGroup label="Camiones" value={form.trucks} onChange={v => setForm({...form, trucks: v})} unit="uds" icon="local_shipping" />
-          <InputGroup label="Contenedores" value={form.containers} onChange={v => setForm({...form, containers: v})} unit="TEU" icon="box" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {/* Sección Transporte Interno Mejorada */}
+          <div className="md:col-span-2 bg-slate-50 dark:bg-white/5 p-6 rounded-2xl border border-slate-100 dark:border-white/5">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-orange-500">local_shipping</span>
+              <h4 className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">Cálculo Transporte Interno</h4>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <InputGroup 
+                  label="Camiones (Ref)" 
+                  value={form.trucks} 
+                  onChange={v => setForm({...form, trucks: v})} 
+                  unit="uds" 
+                  icon="front_loader" 
+               />
+               
+               <InputGroup 
+                  label="Contenedores (N)" 
+                  value={form.containers} 
+                  onChange={v => setForm({...form, containers: v})} 
+                  unit="TEU" 
+                  icon="box" 
+               />
+
+               <InputGroup 
+                  label="Factor Emisión (EF)" 
+                  value={transportEF} 
+                  onChange={v => setTransportEF(v)} 
+                  suffix="kgCO₂/km" 
+                  icon="science" 
+                  step="0.01"
+                  placeholder="1.0"
+               />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between text-[10px] text-slate-500 font-medium bg-white dark:bg-black/20 p-3 rounded-xl border border-slate-100 dark:border-white/5">
+               <span className="uppercase tracking-widest">Fórmula: E(N) = N • EF</span>
+               <div className="flex items-center gap-1">
+                 <span>Resultado Parcial:</span>
+                 <span className="font-black text-orange-500 text-xs">{formatNumber(emisionesTransporteKg, 1)} kgCO₂</span>
+               </div>
+            </div>
+          </div>
+
+          {/* Inputs Energéticos */}
           <InputGroup label="Electricidad" value={form.electricity} onChange={v => setForm({...form, electricity: v})} unit="kWh" icon="bolt" />
-          <InputGroup label="Diesel" value={form.diesel} onChange={v => setForm({...form, diesel: v})} unit="Lts" icon="ev_station" />
+          <InputGroup label="Diesel (Maquinaria)" value={form.diesel} onChange={v => setForm({...form, diesel: v})} unit="Lts" icon="ev_station" />
         </div>
 
         <div className="mt-10 p-6 bg-primary/5 rounded-2xl border border-primary/20 flex flex-col gap-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
              {/* Emisiones */}
              <div>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Emisiones Brutas Estimadas</p>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Emisiones Brutas Totales</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-black text-slate-800 dark:text-white">{formatNumber(emisionesTotales, 4)}</span>
                   <span className="text-sm font-bold text-slate-500">tCO₂e</span>
                 </div>
+                <p className="text-[9px] text-slate-400 font-medium mt-1">Incluye Electricidad, Diesel y Transporte (N•EF)</p>
              </div>
 
              {/* Captura (Highlight) */}
@@ -225,7 +296,7 @@ const FormularioIngreso: React.FC = () => {
   );
 };
 
-const InputGroup = ({ label, value, onChange, unit, icon }: any) => (
+const InputGroup = ({ label, value, onChange, unit, suffix, icon, step = "any", placeholder = "0" }: any) => (
   <div className="space-y-2">
     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
       <span className="material-symbols-outlined text-sm">{icon}</span>
@@ -234,12 +305,17 @@ const InputGroup = ({ label, value, onChange, unit, icon }: any) => (
     <div className="relative">
       <input 
         type="number" 
+        step={step}
         value={value} 
-        placeholder="0,00"
+        placeholder={placeholder}
         onChange={e => onChange(e.target.value)} 
-        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary/20" 
+        className={`w-full py-3 bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary/20 shadow-sm
+          ${unit ? 'pl-12' : 'pl-4'}
+          ${suffix ? 'pr-20' : 'pr-4'}
+        `}
       />
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400 uppercase">{unit}</span>
+      {unit && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400 uppercase">{unit}</span>}
+      {suffix && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400 uppercase">{suffix}</span>}
     </div>
   </div>
 );

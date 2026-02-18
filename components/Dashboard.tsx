@@ -439,7 +439,7 @@ const Dashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                       <Pie
-                          activeIndex={activeIndex}
+                          {...{ activeIndex } as any}
                           activeShape={renderActiveShape}
                           data={pieData}
                           cx="50%"
