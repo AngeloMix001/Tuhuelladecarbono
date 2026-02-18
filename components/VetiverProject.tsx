@@ -326,6 +326,18 @@ const VetiverProject: React.FC = () => {
 
   const hasErrors = Object.values(validationErrors).some(error => error);
 
+  // --- NUEVO MÓDULO INDEPENDIENTE: Transporte Interno ---
+  const [transportN, setTransportN] = useState<string>(''); // N: Número de contenedores
+  const [transportEF, setTransportEF] = useState<string>('1'); // EF: Factor emisión (default 1)
+
+  // Cálculo automático: E(N) = N * EF
+  const transportEmissionResult = useMemo(() => {
+    const N = parseFloat(transportN) || 0;
+    const EF = parseFloat(transportEF) || 0;
+    return N * EF;
+  }, [transportN, transportEF]);
+  // -----------------------------------------------------
+
   useEffect(() => {
     const timer = setTimeout(() => setIsChartLoading(false), 1000);
     return () => clearTimeout(timer);
@@ -541,6 +553,54 @@ const VetiverProject: React.FC = () => {
                     </div>
                   </div>
                 )}
+              </div>
+           </section>
+
+           {/* --- NUEVO MÓDULO VISUAL: TRANSPORTE INTERNO --- */}
+           <section className="bg-white dark:bg-slate-900 p-10 rounded-[48px] border border-orange-500/20 shadow-2xl relative overflow-hidden group">
+              <h3 className="text-xl font-black mb-8 flex items-center gap-4 dark:text-white uppercase tracking-tighter leading-tight">
+                <span className="material-symbols-outlined text-orange-500 text-2xl">local_shipping</span> Transporte Interno
+              </h3>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cantidad Contenedores (N)</label>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      value={transportN} 
+                      onChange={(e) => setTransportN(e.target.value)} 
+                      placeholder="Ingrese cantidad N"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[20px] px-6 py-4 text-sm font-black dark:text-white outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all" 
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Uds</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Factor Emisión (EF)</label>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      value={transportEF} 
+                      onChange={(e) => setTransportEF(e.target.value)} 
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[20px] px-6 py-4 text-sm font-black dark:text-white outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all" 
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">kgCO₂/km</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/10 animate-in slide-in-from-top-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">Emisión Estimada (N • EF)</p>
+                  <div className="flex justify-center items-baseline gap-2">
+                    <span className="text-5xl font-black text-orange-500 tracking-tighter">{formatNumber(transportEmissionResult)}</span>
+                    <span className="text-xs font-black text-orange-500/60 uppercase tracking-widest">kgCO₂</span>
+                  </div>
+                </div>
               </div>
            </section>
         </div>
