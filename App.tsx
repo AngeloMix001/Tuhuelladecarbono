@@ -9,7 +9,6 @@ import VetiverProject from './components/VetiverProject.tsx';
 import Reports from './components/Reports.tsx';
 import Profile from './components/Profile.tsx';
 import Login from './components/Login.tsx';
-import AiInsights from './components/AiInsights.tsx';
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -110,8 +109,6 @@ const App: React.FC = () => {
           </Routes>
         </main>
         
-        <AiInsights kpis={{ totalEmissions: "1.790,5", netBalance: "1.577,2" }} data={[]} />
-
         <footer className="mt-auto p-8 border-t border-slate-200 dark:border-slate-800 text-center">
           <p className="text-xs text-slate-400 font-medium">© 2026 Puerto Columbo S.A. – Sistema de Gestión Ambiental</p>
         </footer>
