@@ -364,7 +364,7 @@ const Dashboard: React.FC = () => {
                   unit=" t" 
                 />
                 <Tooltip content={<CustomBalanceTooltip />} cursor={{ stroke: COLORS.primary, strokeWidth: 2, strokeDasharray: '4 4' }} />
-                <ReferenceLine y={0} stroke={COLORS.slate400} strokeDasharray="3 3" opacity={0.6} />
+                <ReferenceLine y={0} stroke={COLORS.slate500} strokeDasharray="3 3" opacity={0.6} />
                 <Area 
                   type="monotone" 
                   dataKey="balance" 
