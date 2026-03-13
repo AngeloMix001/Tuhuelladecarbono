@@ -296,7 +296,18 @@ const FormularioIngreso: React.FC = () => {
   );
 };
 
-const InputGroup = ({ label, value, onChange, unit, suffix, icon, step = "any", placeholder = "0" }: any) => (
+interface InputGroupProps {
+  label: string;
+  value: string | number;
+  onChange: (value: string) => void;
+  unit?: string;
+  suffix?: string;
+  icon: string;
+  step?: string;
+  placeholder?: string;
+}
+
+const InputGroup = ({ label, value, onChange, unit, suffix, icon, step = "any", placeholder = "0" }: InputGroupProps) => (
   <div className="space-y-2">
     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
       <span className="material-symbols-outlined text-sm">{icon}</span>
