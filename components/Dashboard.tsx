@@ -342,37 +342,39 @@ const Dashboard: React.FC = () => {
              </div>
 
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.2}/>
                     <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="transparent" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(200,200,200,0.1)" />
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 12, fontWeight: 900, fill: '#94a3b8' }} 
+                  tick={{ fontSize: 12, fontWeight: 700, fill: '#94a3b8' }} 
                   dy={15} 
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} 
+                  tick={{ fontSize: 11, fontWeight: 600, fill: '#94a3b8' }} 
                   unit=" t" 
                 />
-                <Tooltip content={<CustomBalanceTooltip />} cursor={{ stroke: COLORS.primary, strokeWidth: 1, strokeDasharray: '5 5' }} />
-                <ReferenceLine y={0} stroke={COLORS.primary} strokeDasharray="4 4" opacity={0.5} />
+                <Tooltip content={<CustomBalanceTooltip />} cursor={{ stroke: COLORS.primary, strokeWidth: 2, strokeDasharray: '4 4' }} />
+                <ReferenceLine y={0} stroke={COLORS.slate400} strokeDasharray="3 3" opacity={0.6} />
                 <Area 
                   type="monotone" 
                   dataKey="balance" 
+                  name="Balance Neto" 
                   stroke={COLORS.primary} 
-                  strokeWidth={5} 
+                  strokeWidth={4} 
                   fillOpacity={1} 
                   fill="url(#colorBalance)" 
-                  animationDuration={2000}
+                  animationDuration={1500}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: COLORS.primary }}
                 />
               </AreaChart>
             </ResponsiveContainer>
