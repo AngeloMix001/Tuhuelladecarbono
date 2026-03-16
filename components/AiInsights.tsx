@@ -202,7 +202,11 @@ const AiInsights: React.FC<AiInsightsProps> = ({ kpis }) => {
     setLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const apiKey = process.env.API_KEY;
+      if (!apiKey || apiKey === 'undefined') {
+        throw new Error("API_KEY is not set");
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const systemInstruction = `Eres Columbito, el asistente inteligente oficial de Puerto Columbo. Tu lenguaje es técnico, eficiente y servicial. 
       CONTEXTO 2026:
       - Emisiones Brutas: 945.2 t
